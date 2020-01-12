@@ -5,6 +5,7 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use std::io::{stdin, stdout, Write};
 use termion::{color, style};
+use std::cmp;
 
 #[derive(Debug)]
 struct CursorPosition {
@@ -63,6 +64,18 @@ fn main() {
             Key::Backspace => {
                 cursor.x = cursor.x - 1;
                 text.truncate(text.len() - 1)
+            }
+            Key::Left => {
+                cursor.x = cmp::max(2, cursor.x) - 1;
+            }
+            Key::Right => {
+                cursor.x = cursor.x + 1;
+            }
+            Key::Up => {
+                cursor.y = cmp::max(2, cursor.y) - 1;
+            }
+            Key::Down => {
+                cursor.y = cursor.y + 1;
             }
             Key::Esc => break,
             _ => (),
