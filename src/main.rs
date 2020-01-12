@@ -8,7 +8,8 @@ use std::io::{stdin, stdout, Write};
 fn main() {
     let stdin = stdin();
     let mut stdout = stdout().into_raw_mode().unwrap();
-    let mut line = String::new();
+
+    let mut text = String::new();
 
     write!(
         stdout,
@@ -17,9 +18,8 @@ fn main() {
         termion::cursor::Goto(1, 1),
         termion::cursor::Hide
     ).unwrap();
-    stdout.flush().unwrap();
 
-    let mut position = 1;
+    stdout.flush().unwrap();
 
     for c in stdin.keys() {
         write!(
@@ -31,14 +31,16 @@ fn main() {
         ).unwrap();
 
         match c.unwrap() {
-            Key::Char(c) => line.push(c),
-            Key::Backspace => line.truncate(line.len() - 1),
+            Key::Char(c) => text.push(c),
+            Key::Backspace => text.truncate(text.len() - 1),
             Key::Esc => break,
-            _ => {}
+            _ => (),
         }
-        println!("{}{}", termion::cursor::Goto(1, 2), line);
+        let lines: Vec<&str> = text.split('\n').collect();
+        for (index, l) in lines.iter().enumerate() {
+            println!("{}{}", termion::cursor::Goto(1, index as u16 + 2), l);
+        }
         stdout.flush().unwrap();
-        position = position + 1;
     }
 
     write!(stdout, "{}", termion::cursor::Show).unwrap();
