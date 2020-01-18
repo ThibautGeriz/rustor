@@ -15,6 +15,16 @@ struct CursorPosition {
     y: u16,
 }
 
+fn render_line_nb(left_pad: &u16, line_nb: &u16) -> String {
+    let nb_of_blanks_before_line_nb = left_pad - get_number_of_chars_of_u16(&line_nb);
+    let mut line_nb_displayed = String::new();
+    for _ in 0..nb_of_blanks_before_line_nb {
+        line_nb_displayed.push(' ')
+    }
+    line_nb_displayed.push_str(&line_nb.to_string());
+    return line_nb_displayed;
+}
+
 fn print_line(
     stream: &mut termion::raw::RawTerminal<std::io::Stdout>,
     left_pad: u16,
@@ -22,12 +32,7 @@ fn print_line(
     content: &str,
     cursor: &CursorPosition,
 ) {
-    let nb_of_blanks_before_line_nb = left_pad - get_number_of_chars_of_u16(&line_nb);
-    let mut line_nb_displayed = String::new();
-    for _ in 1..nb_of_blanks_before_line_nb {
-        line_nb_displayed.push('u')
-    }
-    line_nb_displayed.push_str(&line_nb.to_string());
+    let line_nb_displayed = render_line_nb(&left_pad, &line_nb);
     write!(
         stream,
         "{}{}{}.{} {}{}",
