@@ -96,7 +96,7 @@ fn handle_key_press(key: Result<Key, Error>, lines: &mut Vec<String>, cursor: &m
                 let nb_char_in_previous_line = lines[(cursor.y as usize) - 2].len() as u16;
                 cursor.y = cursor.y - 1;
                 cursor.x = nb_char_in_previous_line + 1;
-                lines.remove((nb_lines as usize) - 1);
+                lines.remove(cursor.y as usize);
             }
         }
         Key::Left => {
