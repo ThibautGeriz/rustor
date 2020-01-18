@@ -77,13 +77,21 @@ fn handle_key_press(key: Result<Key, Error>, lines: &mut Vec<String>, cursor: &m
             cursor.x = 1;
         }
         Key::Char(c) => {
+            if current_line.len() + 1 == cursor.x as usize {
+                current_line.push(c)
+            } else {
+                current_line.insert(cursor.x as usize - 1, c)
+            }
             cursor.x = cursor.x + 1;
-            current_line.push(c)
         }
         Key::Backspace => {
             if cursor.x != 1 {
                 cursor.x = cursor.x - 1;
-                current_line.truncate(current_line.len() - 1)
+                if current_line.len() + 1 == cursor.x as usize {
+                    current_line.truncate(current_line.len() - 1);
+                } else {
+                    current_line.remove(cursor.x as usize - 1);
+                }
             } else if cursor.y > 1 {
                 let nb_char_in_previous_line = lines[(cursor.y as usize) - 2].len() as u16;
                 cursor.y = cursor.y - 1;
