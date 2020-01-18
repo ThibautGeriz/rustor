@@ -65,30 +65,30 @@ fn get_number_of_chars_of_u16(num: &u16) -> u16 {
     return base.len() as u16;
 }
 
-fn handle_key_press(key: Result<Key, Error>, text: &mut String, cursor: &mut CursorPosition) {
-    let lines: Vec<&str> = text.split('\n').collect();
+fn handle_key_press(key: Result<Key, Error>, lines: &mut Vec<String>, cursor: &mut CursorPosition) {
     let nb_lines = lines.len() as u16;
-    let nb_char_in_current_line = lines[(cursor.y as usize) - 1].len() as u16;
+    let current_line = &mut lines[(cursor.y as usize) - 1];
+    let nb_char_in_current_line = current_line.len() as u16;
 
     match key.unwrap() {
         Key::Char('\n') => {
+            lines.push(String::new());
             cursor.y = cursor.y + 1;
             cursor.x = 1;
-            text.push('\n')
         }
         Key::Char(c) => {
             cursor.x = cursor.x + 1;
-            text.push(c)
+            current_line.push(c)
         }
         Key::Backspace => {
             if cursor.x != 1 {
                 cursor.x = cursor.x - 1;
-                text.truncate(text.len() - 1)
+                current_line.truncate(current_line.len() - 1)
             } else if cursor.y > 1 {
                 let nb_char_in_previous_line = lines[(cursor.y as usize) - 2].len() as u16;
                 cursor.y = cursor.y - 1;
                 cursor.x = nb_char_in_previous_line + 1;
-                text.truncate(text.len() - 1)
+                lines.remove((nb_lines as usize) - 1);
             }
         }
         Key::Left => {
@@ -105,6 +105,10 @@ fn handle_key_press(key: Result<Key, Error>, text: &mut String, cursor: &mut Cur
             cursor.y = cmp::max(2, cursor.y) - 1;
         }
         Key::Down => {
+            if cursor.y != nb_lines {
+                let nb_char_in_next_line = lines[(cursor.y as usize)].len() as u16;
+                cursor.x = cmp::min(cursor.x, nb_char_in_next_line + 1);
+            }
             cursor.y = cmp::min(nb_lines, cursor.y + 1);
         }
         Key::Esc => exit(1),
@@ -116,7 +120,7 @@ fn main() {
     let stdin = stdin();
     let mut stdout = stdout().into_raw_mode().unwrap();
 
-    let mut text = String::new();
+    let mut lines: Vec<String> = vec![String::new()];
 
     let mut cursor = CursorPosition { x: 1, y: 1 };
 
@@ -128,9 +132,8 @@ fn main() {
 
     for c in stdin.keys() {
         print_first_line(&mut stdout);
-        handle_key_press(c, &mut text, &mut cursor);
+        handle_key_press(c, &mut lines, &mut cursor);
 
-        let lines: Vec<&str> = text.split('\n').collect();
         let left_pad = get_number_of_chars_of_u16(&(lines.len() as u16));
         for (index, l) in lines.iter().enumerate() {
             print_line(&mut stdout, left_pad, index as u16 + 1, &l, &cursor)
