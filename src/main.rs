@@ -66,6 +66,10 @@ fn get_number_of_chars_of_u16(num: &u16) -> u16 {
 }
 
 fn handle_key_press(key: Result<Key, Error>, text: &mut String, cursor: &mut CursorPosition) {
+    let lines: Vec<&str> = text.split('\n').collect();
+    let nb_lines = lines.len() as u16;
+    let nb_char_in_current_line = lines[(cursor.y as usize) - 1].len() as u16;
+
     match key.unwrap() {
         Key::Char('\n') => {
             cursor.y = cursor.y + 1;
@@ -84,13 +88,17 @@ fn handle_key_press(key: Result<Key, Error>, text: &mut String, cursor: &mut Cur
             cursor.x = cmp::max(2, cursor.x) - 1;
         }
         Key::Right => {
-            cursor.x = cursor.x + 1;
+            cursor.x = cmp::min(cursor.x + 1, nb_char_in_current_line + 1);
         }
         Key::Up => {
+            if cursor.y != 1 {
+                let nb_char_in_previous_line = lines[(cursor.y as usize) - 2].len() as u16;
+                cursor.x = cmp::min(cursor.x, nb_char_in_previous_line + 1);
+            }
             cursor.y = cmp::max(2, cursor.y) - 1;
         }
         Key::Down => {
-            cursor.y = cursor.y + 1;
+            cursor.y = cmp::min(nb_lines, cursor.y + 1);
         }
         Key::Esc => exit(1),
         _ => (),
