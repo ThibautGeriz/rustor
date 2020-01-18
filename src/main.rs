@@ -81,8 +81,15 @@ fn handle_key_press(key: Result<Key, Error>, text: &mut String, cursor: &mut Cur
             text.push(c)
         }
         Key::Backspace => {
-            cursor.x = cursor.x - 1;
-            text.truncate(text.len() - 1)
+            if cursor.x != 1 {
+                cursor.x = cursor.x - 1;
+                text.truncate(text.len() - 1)
+            } else if cursor.y > 1 {
+                let nb_char_in_previous_line = lines[(cursor.y as usize) - 2].len() as u16;
+                cursor.y = cursor.y - 1;
+                cursor.x = nb_char_in_previous_line + 1;
+                text.truncate(text.len() - 1)
+            }
         }
         Key::Left => {
             cursor.x = cmp::max(2, cursor.x) - 1;
@@ -114,6 +121,8 @@ fn main() {
     let mut cursor = CursorPosition { x: 1, y: 1 };
 
     print_first_line(&mut stdout);
+
+    print_line(&mut stdout, 1, 1, "", &cursor);
 
     stdout.flush().unwrap();
 
