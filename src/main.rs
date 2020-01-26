@@ -159,3 +159,101 @@ fn main() {
 
     write!(stdout, "{}", termion::cursor::Show).unwrap();
 }
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_get_number_of_chars_of_u16_one_digit() {
+        // Given
+        let nb = 4 as u16;
+
+        // When
+        let result = get_number_of_chars_of_u16(&nb);
+
+        // Then
+        assert_eq!(result, 1);
+    }
+
+    #[test]
+    fn test_get_number_of_chars_of_u16_two_digits() {
+        // Given
+        let nb = 99 as u16;
+
+        // When
+        let result = get_number_of_chars_of_u16(&nb);
+
+        // Then
+        assert_eq!(result, 2);
+    }
+
+    #[test]
+    fn test_get_number_of_chars_of_u16_three_digits() {
+        // Given
+        let nb = 666 as u16;
+
+        // When
+        let result = get_number_of_chars_of_u16(&nb);
+
+        // Then
+        assert_eq!(result, 3);
+    }
+
+    #[test]
+    fn test_render_line_nb_56_out_of_3() {
+        // Given
+        let padding = 3;
+        let line_number = 56;
+
+        // When
+        let result = render_line_nb(&padding, &line_number);
+
+        // Then
+        assert_eq!(result, " 56");
+    }
+
+    #[test]
+    fn test_render_line_nb_57_out_of_2() {
+        // Given
+        let padding = 2;
+        let line_number = 57;
+
+        // When
+        let result = render_line_nb(&padding, &line_number);
+
+        // Then
+        assert_eq!(result, "57");
+    }
+
+    #[test]
+    fn test_render_line_nb_4_out_of_5() {
+        // Given
+        let padding = 4;
+        let line_number = 5;
+
+        // When
+        let result = render_line_nb(&padding, &line_number);
+
+        // Then
+        assert_eq!(result, "   5");
+    }
+
+    #[test]
+    fn test_handle_key_press_first_char() {
+        // Given
+        let key = Ok(Key::Char('t'));
+        let mut lines: Vec<String> = vec![String::new()];
+        let mut cursor = CursorPosition { x: 1, y: 1 };
+
+        // When
+        handle_key_press(key, &mut lines, &mut cursor);
+
+        // Then
+        assert_eq!(cursor.x, 2);
+        assert_eq!(cursor.y, 1);
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0], "t");
+    }
+}
