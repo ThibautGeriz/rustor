@@ -1,8 +1,12 @@
 extern crate termion;
 
 use std::cmp;
+use std::env;
+use std::fs::File;
 use std::io::Error;
+use std::io::{self, BufRead};
 use std::io::{stdin, stdout, Write};
+use std::path::Path;
 use std::process::exit;
 use termion::event::Key;
 use termion::input::TermRead;
@@ -132,28 +136,68 @@ fn handle_key_press(key: Result<Key, Error>, lines: &mut Vec<String>, cursor: &m
     }
 }
 
+fn read_lines<P>(file_name: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where
+    P: AsRef<Path>,
+{
+    let file = File::open(file_name)?;
+    Ok(io::BufReader::new(file).lines())
+}
+
+fn init_lines(args: &Vec<String>) -> Vec<String> {
+    let mut lines: Vec<String> = vec![];
+    if args.len() > 1 {
+        let file_name = &args[1];
+        if let Ok(lines_in_file) = read_lines(file_name) {
+            for line_in_file in lines_in_file {
+                if let Ok(line) = line_in_file {
+                    lines.push(line);
+                }
+            }
+        }
+    } else {
+        lines.push(String::new());
+    }
+    return lines;
+}
+
+fn check_arguments(args: &Vec<String>) {
+    if args.len() > 2 {
+        panic!("Too many arguments")
+    }
+}
+
+fn print_text(
+    stream: &mut termion::raw::RawTerminal<std::io::Stdout>,
+    lines: &Vec<String>,
+    cursor: &CursorPosition,
+) {
+    let left_pad = get_number_of_chars_of_u16(&(lines.len() as u16));
+    for (index, l) in lines.iter().enumerate() {
+        print_line(stream, left_pad, index as u16 + 1, &l, &cursor)
+    }
+}
+
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    check_arguments(&args);
+
     let stdin = stdin();
     let mut stdout = stdout().into_raw_mode().unwrap();
-
-    let mut lines: Vec<String> = vec![String::new()];
 
     let mut cursor = CursorPosition { x: 1, y: 1 };
 
     print_first_line(&mut stdout);
 
-    print_line(&mut stdout, 1, 1, "", &cursor);
+    let mut lines = init_lines(&args);
 
+    print_text(&mut stdout, &lines, &cursor);
     stdout.flush().unwrap();
 
     for c in stdin.keys() {
         print_first_line(&mut stdout);
         handle_key_press(c, &mut lines, &mut cursor);
-
-        let left_pad = get_number_of_chars_of_u16(&(lines.len() as u16));
-        for (index, l) in lines.iter().enumerate() {
-            print_line(&mut stdout, left_pad, index as u16 + 1, &l, &cursor)
-        }
+        print_text(&mut stdout, &lines, &cursor);
         stdout.flush().unwrap();
     }
 

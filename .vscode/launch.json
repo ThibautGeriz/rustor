@@ -9,11 +9,7 @@
       "request": "launch",
       "name": "Debug executable 'rustor'",
       "cargo": {
-        "args": [
-          "build",
-          "--bin=rustor",
-          "--package=rustor"
-        ],
+        "args": ["build", "--bin=rustor", "--package=rustor"],
         "filter": {
           "name": "rustor",
           "kind": "bin"
@@ -25,14 +21,23 @@
     {
       "type": "lldb",
       "request": "launch",
+      "name": "Debug executable 'rustor' with file",
+      "cargo": {
+        "args": ["build", "--bin=rustor", "--package=rustor"],
+        "filter": {
+          "name": "rustor",
+          "kind": "bin"
+        }
+      },
+      "args": ["src/main.rs"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
       "name": "Debug unit tests in executable 'rustor'",
       "cargo": {
-        "args": [
-          "test",
-          "--no-run",
-          "--bin=rustor",
-          "--package=rustor"
-        ],
+        "args": ["test", "--no-run", "--bin=rustor", "--package=rustor"],
         "filter": {
           "name": "rustor",
           "kind": "bin"
