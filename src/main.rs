@@ -13,7 +13,6 @@ use termion::{color, style};
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
-use std::ops::Add;
 
 #[derive(Debug)]
 struct CursorPosition {
@@ -72,6 +71,43 @@ fn get_number_of_chars_of_u16(num: &u16) -> u16 {
     return base.len() as u16;
 }
 
+fn backspace_remove_characters_in_line(y_position_in_file: usize, cursor: &mut CursorPosition, lines: &mut Vec<String>) {
+    let current_line = &mut lines[y_position_in_file - 1];
+    cursor.x = cursor.x - 1;
+    current_line.remove(cursor.x as usize - 1);
+}
+
+fn backspace_remove_line_break_when_not_on_first_line(
+    y_position_in_file: usize,
+    cursor: &mut CursorPosition,
+    lines: &mut Vec<String>) {
+
+    if cursor.x == 1 {
+        move_content_from_current_line_to_previous_line(y_position_in_file, cursor, lines);
+    }
+
+    let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
+    cursor.y = cursor.y - 1;
+    cursor.x = nb_char_in_previous_line + 1;
+    lines.remove(y_position_in_file - 1);
+}
+
+fn move_content_from_current_line_to_previous_line(y_position_in_file: usize,
+                                                   cursor: &mut CursorPosition,
+                                                   lines: &mut Vec<String>) {
+    let current_line = lines[y_position_in_file - 1].clone();
+    let previous_line = &mut lines[y_position_in_file - 2];
+    previous_line.push_str(&current_line);
+}
+
+fn backspace_remove_first_displayed_line(y_position_in_file: usize,
+                                         cursor: &mut CursorPosition,
+                                         lines: &mut Vec<String>) {
+    let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
+    cursor.x = nb_char_in_previous_line + 1;
+    lines.remove(y_position_in_file - 1);
+}
+
 fn handle_key_press(key: Result<Key, Error>,
                     lines: &mut Vec<String>,
                     cursor: &mut CursorPosition,
@@ -79,7 +115,7 @@ fn handle_key_press(key: Result<Key, Error>,
     let nb_lines = lines.len() as u16;
     let (_, terminal_height) = termion::terminal_size().unwrap();
     let y_position_in_file = cursor.y as usize + terminal_height_offset;
-    
+
     match key.unwrap() {
         Key::Char('\n') => {
             let current_line = lines[y_position_in_file - 1].clone();
@@ -92,7 +128,7 @@ fn handle_key_press(key: Result<Key, Error>,
             if cursor.y == terminal_height - 1 {
                 cursor.x = 1;
                 return terminal_height_offset + 1;
-            } 
+            }
             cursor.x = 1;
             cursor.y = cursor.y + 1;
         }
@@ -103,22 +139,16 @@ fn handle_key_press(key: Result<Key, Error>,
         }
         Key::Backspace => {
             if cursor.x != 1 {
-                let current_line = &mut lines[y_position_in_file - 1];
-                cursor.x = cursor.x - 1;
-                current_line.remove(cursor.x as usize - 1);
-            } else if cursor.y > 1 && cursor.x == 1 {
-                let current_line = lines[y_position_in_file - 1].clone();
-                let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
-                let previous_line = &mut lines[y_position_in_file - 2];
-                previous_line.push_str(&current_line);
-                cursor.y = cursor.y - 1;
-                cursor.x = nb_char_in_previous_line + 1;
-                lines.remove(y_position_in_file);
+                backspace_remove_characters_in_line(y_position_in_file, cursor, lines);
             } else if cursor.y > 1 {
-                let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
-                cursor.y = cursor.y - 1;
-                cursor.x = nb_char_in_previous_line + 1;
-                lines.remove(y_position_in_file);
+                backspace_remove_line_break_when_not_on_first_line(y_position_in_file, cursor, lines);
+                if lines.len() - terminal_height_offset < terminal_height as usize {
+                    return terminal_height_offset - 1;
+                }
+            }
+            else if terminal_height_offset > 0 && cursor.y == 1 {
+                backspace_remove_first_displayed_line(y_position_in_file, cursor, lines);
+                return terminal_height_offset - 1;
             }
         }
         Key::Left => {
@@ -134,7 +164,7 @@ fn handle_key_press(key: Result<Key, Error>,
                 let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
                 cursor.x = cmp::min(cursor.x, nb_char_in_previous_line + 1);
             }
-            if cursor.y == 1 && terminal_height_offset >= 1{
+            if cursor.y == 1 && terminal_height_offset >= 1 {
                 return terminal_height_offset - 1;
             }
             cursor.y = cmp::max(2, cursor.y) - 1;
