@@ -13,6 +13,7 @@ use termion::{color, style};
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
+use std::ops::Add;
 
 #[derive(Debug)]
 struct CursorPosition {
@@ -33,22 +34,23 @@ fn render_line_nb(left_pad: &u16, line_nb: &u16) -> String {
 fn print_line(
     stream: &mut termion::raw::RawTerminal<std::io::Stdout>,
     left_pad: u16,
-    line_nb: u16,
+    terminal_line_nb: u16,
+    file_line_nb: u16,
     content: &str,
     cursor: &CursorPosition,
 ) {
-    let line_nb_displayed = render_line_nb(&left_pad, &line_nb);
+    let line_nb_displayed = render_line_nb(&left_pad, &file_line_nb);
     write!(
         stream,
         "{}{}{}.{} {}{}",
-        termion::cursor::Goto(1, line_nb + 1),
+        termion::cursor::Goto(1, terminal_line_nb + 1),
         color::Fg(color::Blue),
         line_nb_displayed,
         style::Reset,
         content,
         termion::cursor::Goto(left_pad + cursor.x + 2, cursor.y + 1),
     )
-    .unwrap();
+        .unwrap();
 }
 
 fn print_first_line(stream: &mut termion::raw::RawTerminal<std::io::Stdout>) {
@@ -70,71 +72,90 @@ fn get_number_of_chars_of_u16(num: &u16) -> u16 {
     return base.len() as u16;
 }
 
-fn handle_key_press(key: Result<Key, Error>, lines: &mut Vec<String>, cursor: &mut CursorPosition) {
+fn handle_key_press(key: Result<Key, Error>,
+                    lines: &mut Vec<String>,
+                    cursor: &mut CursorPosition,
+                    terminal_height_offset: usize) -> usize {
     let nb_lines = lines.len() as u16;
-
+    let (_, terminal_height) = termion::terminal_size().unwrap();
+    let y_position_in_file = cursor.y as usize + terminal_height_offset;
+    
     match key.unwrap() {
         Key::Char('\n') => {
-            let current_line = lines[(cursor.y as usize) - 1].clone();
+            let current_line = lines[y_position_in_file - 1].clone();
             let nb_char_in_current_line = current_line.len() as u16;
             let end_of_line =
                 &current_line[cursor.x as usize - 1..nb_char_in_current_line as usize];
-            lines.insert(cursor.y as usize, String::from(end_of_line));
-            let current_line = &mut lines[(cursor.y as usize) - 1];
+            lines.insert(y_position_in_file, String::from(end_of_line));
+            let current_line = &mut lines[y_position_in_file - 1];
             current_line.truncate(cursor.x as usize - 1);
-            cursor.y = cursor.y + 1;
+            if cursor.y == terminal_height - 1 {
+                cursor.x = 1;
+                return terminal_height_offset + 1;
+            } 
             cursor.x = 1;
+            cursor.y = cursor.y + 1;
         }
         Key::Char(c) => {
-            let current_line = &mut lines[(cursor.y as usize) - 1];
+            let current_line = &mut lines[y_position_in_file - 1];
             current_line.insert(cursor.x as usize - 1, c);
             cursor.x = cursor.x + 1;
         }
         Key::Backspace => {
             if cursor.x != 1 {
-                let current_line = &mut lines[(cursor.y as usize) - 1];
+                let current_line = &mut lines[y_position_in_file - 1];
                 cursor.x = cursor.x - 1;
                 current_line.remove(cursor.x as usize - 1);
             } else if cursor.y > 1 && cursor.x == 1 {
-                let current_line = lines[(cursor.y as usize) - 1].clone();
-                let nb_char_in_previous_line = lines[(cursor.y as usize) - 2].len() as u16;
-                let previous_line = &mut lines[(cursor.y as usize) - 2];
+                let current_line = lines[y_position_in_file - 1].clone();
+                let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
+                let previous_line = &mut lines[y_position_in_file - 2];
                 previous_line.push_str(&current_line);
                 cursor.y = cursor.y - 1;
                 cursor.x = nb_char_in_previous_line + 1;
-                lines.remove(cursor.y as usize);
+                lines.remove(y_position_in_file);
             } else if cursor.y > 1 {
-                let nb_char_in_previous_line = lines[(cursor.y as usize) - 2].len() as u16;
+                let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
                 cursor.y = cursor.y - 1;
                 cursor.x = nb_char_in_previous_line + 1;
-                lines.remove(cursor.y as usize);
+                lines.remove(y_position_in_file);
             }
         }
         Key::Left => {
             cursor.x = cmp::max(2, cursor.x) - 1;
         }
         Key::Right => {
-            let current_line = &mut lines[(cursor.y as usize) - 1];
+            let current_line = &mut lines[y_position_in_file - 1];
             let nb_char_in_current_line = current_line.len() as u16;
             cursor.x = cmp::min(cursor.x + 1, nb_char_in_current_line + 1);
         }
         Key::Up => {
             if cursor.y != 1 {
-                let nb_char_in_previous_line = lines[(cursor.y as usize) - 2].len() as u16;
+                let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
                 cursor.x = cmp::min(cursor.x, nb_char_in_previous_line + 1);
+            }
+            if cursor.y == 1 && terminal_height_offset >= 1{
+                return terminal_height_offset - 1;
             }
             cursor.y = cmp::max(2, cursor.y) - 1;
         }
         Key::Down => {
-            if cursor.y != nb_lines {
-                let nb_char_in_next_line = lines[(cursor.y as usize)].len() as u16;
+            if y_position_in_file == lines.len() {
+                return terminal_height_offset;
+            }
+            if cursor.y != terminal_height - 1 {
+                let nb_char_in_next_line = lines[y_position_in_file].len() as u16;
                 cursor.x = cmp::min(cursor.x, nb_char_in_next_line + 1);
             }
-            cursor.y = cmp::min(nb_lines, cursor.y + 1);
+            if cursor.y == terminal_height - 1 {
+                return terminal_height_offset + 1;
+            }
+            cursor.y = cmp::min(terminal_height - 1, cursor.y + 1);
         }
         Key::Esc => exit(1),
         _ => (),
     }
+    return terminal_height_offset;
 }
 
 fn read_lines<P>(file_name: P) -> io::Result<io::Lines<io::BufReader<File>>>
@@ -172,16 +193,19 @@ fn print_text(
     stream: &mut termion::raw::RawTerminal<std::io::Stdout>,
     lines: &Vec<String>,
     cursor: &CursorPosition,
+    terminal_height_offset: usize,
 ) {
-    let (terminal_width, _) = termion::terminal_size().unwrap();
+    let (terminal_width, terminal_height) = termion::terminal_size().unwrap();
     let left_pad = get_number_of_chars_of_u16(&(lines.len() as u16));
-    for (index, l) in lines.iter().enumerate() {
-        if l.len() as u16 > terminal_width - left_pad -2 {
+    let max_line = cmp::min(lines.len(), terminal_height as usize - 1 + terminal_height_offset);
+
+    for (index, l) in lines[terminal_height_offset..max_line].iter().enumerate() {
+        if l.len() as u16 > terminal_width - left_pad - 2 {
             let mut line_content = l.clone();
             line_content.truncate((terminal_width - left_pad - 2) as usize);
-            print_line(stream, left_pad, index as u16 + 1, &line_content, &cursor)
+            print_line(stream, left_pad, index as u16 + 1, index as u16 + 1 + terminal_height_offset as u16, &line_content, &cursor)
         } else {
-            print_line(stream, left_pad, index as u16 + 1, &l, &cursor)
+            print_line(stream, left_pad, index as u16 + 1, index as u16 + 1 + terminal_height_offset as u16, &l, &cursor)
         }
     }
 }
@@ -193,19 +217,20 @@ fn main() {
     let stdin = stdin();
     let mut stdout = stdout().into_raw_mode().unwrap();
 
+    let mut terminal_height_offset: usize = 0;
     let mut cursor = CursorPosition { x: 1, y: 1 };
 
     print_first_line(&mut stdout);
 
     let mut lines = init_lines(&args);
 
-    print_text(&mut stdout, &lines, &cursor);
+    print_text(&mut stdout, &lines, &cursor, terminal_height_offset);
     stdout.flush().unwrap();
 
     for c in stdin.keys() {
         print_first_line(&mut stdout);
-        handle_key_press(c, &mut lines, &mut cursor);
-        print_text(&mut stdout, &lines, &cursor);
+        terminal_height_offset = handle_key_press(c, &mut lines, &mut cursor, terminal_height_offset);
+        print_text(&mut stdout, &lines, &cursor, terminal_height_offset);
         stdout.flush().unwrap();
     }
 
@@ -298,9 +323,10 @@ mod tests {
         let key = Ok(Key::Char('t'));
         let mut lines: Vec<String> = vec![String::new()];
         let mut cursor = CursorPosition { x: 1, y: 1 };
+        let mut terminal_height_offset: usize = 0;
 
         // When
-        handle_key_press(key, &mut lines, &mut cursor);
+        handle_key_press(key, &mut lines, &mut cursor, terminal_height_offset);
 
         // Then
         assert_eq!(cursor.x, 2);
