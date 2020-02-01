@@ -3,15 +3,16 @@ extern crate termion;
 use std::cmp;
 use std::env;
 use std::fs::File;
-use std::io::Error;
 use std::io::{self, BufRead};
 use std::io::{stdin, stdout, Write};
+use std::io::Error;
 use std::path::Path;
 use std::process::exit;
+
+use termion::{color, style};
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
-use termion::{color, style};
 
 #[derive(Debug)]
 struct CursorPosition {
@@ -61,7 +62,7 @@ fn print_first_line(stream: &mut termion::raw::RawTerminal<std::io::Stdout>) {
         style::Reset,
         termion::cursor::Goto(1, 2)
     )
-    .unwrap();
+        .unwrap();
 }
 
 fn get_number_of_chars_of_u16(num: &u16) -> u16 {
@@ -137,8 +138,8 @@ fn handle_key_press(key: Result<Key, Error>, lines: &mut Vec<String>, cursor: &m
 }
 
 fn read_lines<P>(file_name: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
+    where
+        P: AsRef<Path>,
 {
     let file = File::open(file_name)?;
     Ok(io::BufReader::new(file).lines())
@@ -172,9 +173,16 @@ fn print_text(
     lines: &Vec<String>,
     cursor: &CursorPosition,
 ) {
+    let (terminal_width, _) = termion::terminal_size().unwrap();
     let left_pad = get_number_of_chars_of_u16(&(lines.len() as u16));
     for (index, l) in lines.iter().enumerate() {
-        print_line(stream, left_pad, index as u16 + 1, &l, &cursor)
+        if l.len() as u16 > terminal_width - left_pad -2 {
+            let mut line_content = l.clone();
+            line_content.truncate((terminal_width - left_pad - 2) as usize);
+            print_line(stream, left_pad, index as u16 + 1, &line_content, &cursor)
+        } else {
+            print_line(stream, left_pad, index as u16 + 1, &l, &cursor)
+        }
     }
 }
 
