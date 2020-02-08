@@ -21,7 +21,7 @@ mod cursor;
 
 fn backspace_remove_characters_in_line(y_position_in_file: usize, cursor: &mut CursorPosition, lines: &mut Vec<String>) {
     let current_line = &mut lines[y_position_in_file - 1];
-    cursor.x = cursor.x - 1;
+    cursor.move_left();
     current_line.remove(cursor.x as usize - 1);
 }
 
@@ -29,13 +29,12 @@ fn backspace_remove_line_break_when_not_on_first_line(
     y_position_in_file: usize,
     cursor: &mut CursorPosition,
     lines: &mut Vec<String>) {
-    if cursor.x == 1 {
+    let cursor_x = cursor.x;
+    cursor.move_up(&lines);
+    cursor.move_to_end_of_line(&lines);
+    if cursor_x == 1 {
         move_content_from_current_line_to_previous_line(y_position_in_file, cursor, lines);
     }
-
-    let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
-    cursor.y = cursor.y - 1;
-    cursor.x = nb_char_in_previous_line + 1;
     lines.remove(y_position_in_file - 1);
 }
 
@@ -93,17 +92,16 @@ fn handle_key_press(key: Result<Key, Error>,
                     cursor.y_offset = cursor.y_offset - 1;
                 }
             } else if cursor.y_offset > 0 && cursor.y == 1 {
-                backspace_remove_first_displayed_line(y_position_in_file, cursor, lines);
-                cursor.y_offset = cursor.y_offset - 1;
+                cursor.move_to_end_of_line(&lines);
+                lines.remove(y_position_in_file - 1);
+                cursor.move_up(&lines);
             }
         }
         Key::Left => {
             cursor.move_left();
         }
         Key::Right => {
-            let current_line = &mut lines[y_position_in_file - 1];
-            let nb_char_in_current_line = current_line.len() as u16;
-            cursor.move_right(nb_char_in_current_line);
+            cursor.move_right(lines);
         }
         Key::Up => {
             cursor.move_up(lines);
