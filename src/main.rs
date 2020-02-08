@@ -8,17 +8,16 @@ use std::io::{stdin, stdout, Write};
 use std::io::Error;
 use std::path::Path;
 use std::process::exit;
-mod window;
-mod cursor;
-
-use window::*;
-use cursor::*;
 
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 
+use cursor::*;
+use window::*;
 
+mod window;
+mod cursor;
 
 fn backspace_remove_characters_in_line(y_position_in_file: usize, cursor: &mut CursorPosition, lines: &mut Vec<String>) {
     let current_line = &mut lines[y_position_in_file - 1];
@@ -30,7 +29,6 @@ fn backspace_remove_line_break_when_not_on_first_line(
     y_position_in_file: usize,
     cursor: &mut CursorPosition,
     lines: &mut Vec<String>) {
-
     if cursor.x == 1 {
         move_content_from_current_line_to_previous_line(y_position_in_file, cursor, lines);
     }
@@ -59,11 +57,10 @@ fn backspace_remove_first_displayed_line(y_position_in_file: usize,
 
 fn handle_key_press(key: Result<Key, Error>,
                     lines: &mut Vec<String>,
-                    cursor: &mut CursorPosition,
-                    terminal_height_offset: usize) -> usize {
+                    cursor: &mut CursorPosition) {
     let nb_lines = lines.len() as u16;
     let (_, terminal_height) = termion::terminal_size().unwrap();
-    let y_position_in_file = cursor.y as usize + terminal_height_offset;
+    let y_position_in_file = cursor.y as usize + cursor.y_offset as usize;
 
     match key.unwrap() {
         Key::Char('\n') => {
@@ -76,10 +73,11 @@ fn handle_key_press(key: Result<Key, Error>,
             current_line.truncate(cursor.x as usize - 1);
             if cursor.y == terminal_height - 1 {
                 cursor.x = 1;
-                return terminal_height_offset + 1;
+                cursor.y_offset = cursor.y_offset + 1;
+            } else {
+                cursor.x = 1;
+                cursor.y = cursor.y + 1;
             }
-            cursor.x = 1;
-            cursor.y = cursor.y + 1;
         }
         Key::Char(c) => {
             let current_line = &mut lines[y_position_in_file - 1];
@@ -91,13 +89,12 @@ fn handle_key_press(key: Result<Key, Error>,
                 backspace_remove_characters_in_line(y_position_in_file, cursor, lines);
             } else if cursor.y > 1 {
                 backspace_remove_line_break_when_not_on_first_line(y_position_in_file, cursor, lines);
-                if lines.len() - terminal_height_offset < terminal_height as usize {
-                    return terminal_height_offset - 1;
+                if cursor.y_offset > 0 && lines.len() as u16 - cursor.y_offset < terminal_height {
+                    cursor.y_offset = cursor.y_offset - 1;
                 }
-            }
-            else if terminal_height_offset > 0 && cursor.y == 1 {
+            } else if cursor.y_offset > 0 && cursor.y == 1 {
                 backspace_remove_first_displayed_line(y_position_in_file, cursor, lines);
-                return terminal_height_offset - 1;
+                cursor.y_offset = cursor.y_offset - 1;
             }
         }
         Key::Left => {
@@ -113,28 +110,31 @@ fn handle_key_press(key: Result<Key, Error>,
                 let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
                 cursor.x = cmp::min(cursor.x, nb_char_in_previous_line + 1);
             }
-            if cursor.y == 1 && terminal_height_offset >= 1 {
-                return terminal_height_offset - 1;
+             if cursor.y == 1 && cursor.y_offset >= 1 {
+                cursor.y_offset = cursor.y_offset - 1;
+                 
+            } else {
+                cursor.y = cmp::max(2, cursor.y) - 1;
             }
-            cursor.y = cmp::max(2, cursor.y) - 1;
+        
         }
         Key::Down => {
             if y_position_in_file == lines.len() {
-                return terminal_height_offset;
+                return;
             }
-            if cursor.y != terminal_height - 1 {
+             if cursor.y != terminal_height - 1 {
                 let nb_char_in_next_line = lines[y_position_in_file].len() as u16;
                 cursor.x = cmp::min(cursor.x, nb_char_in_next_line + 1);
+            } 
+             if cursor.y == terminal_height - 1 {
+                cursor.y_offset = cursor.y_offset + 1;
+            } else {
+                cursor.y = cmp::min(terminal_height - 1, cursor.y + 1);
             }
-            if cursor.y == terminal_height - 1 {
-                return terminal_height_offset + 1;
-            }
-            cursor.y = cmp::min(terminal_height - 1, cursor.y + 1);
         }
         Key::Esc => exit(1),
         _ => (),
     }
-    return terminal_height_offset;
 }
 
 fn read_lines<P>(file_name: P) -> io::Result<io::Lines<io::BufReader<File>>>
@@ -168,26 +168,6 @@ fn check_arguments(args: &Vec<String>) {
     }
 }
 
-fn print_text(
-    stream: &mut termion::raw::RawTerminal<std::io::Stdout>,
-    lines: &Vec<String>,
-    cursor: &CursorPosition,
-    terminal_height_offset: usize,
-) {
-    let (terminal_width, terminal_height) = termion::terminal_size().unwrap();
-    let left_pad = get_number_of_chars_of_u16(&(lines.len() as u16));
-    let max_line = cmp::min(lines.len(), terminal_height as usize - 1 + terminal_height_offset);
-
-    for (index, l) in lines[terminal_height_offset..max_line].iter().enumerate() {
-        if l.len() as u16 > terminal_width - left_pad - 2 {
-            let mut line_content = l.clone();
-            line_content.truncate((terminal_width - left_pad - 2) as usize);
-            print_line(stream, left_pad, index as u16 + 1, index as u16 + 1 + terminal_height_offset as u16, &line_content, &cursor)
-        } else {
-            print_line(stream, left_pad, index as u16 + 1, index as u16 + 1 + terminal_height_offset as u16, &l, &cursor)
-        }
-    }
-}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -196,20 +176,19 @@ fn main() {
     let stdin = stdin();
     let mut stdout = stdout().into_raw_mode().unwrap();
 
-    let mut terminal_height_offset: usize = 0;
-    let mut cursor = CursorPosition { x: 1, y: 1 };
+    let mut cursor = CursorPosition { x: 1, y: 1, y_offset: 0 };
 
     print_first_line(&mut stdout);
 
     let mut lines = init_lines(&args);
 
-    print_text(&mut stdout, &lines, &cursor, terminal_height_offset);
+    print_text(&mut stdout, &lines, &cursor);
     stdout.flush().unwrap();
 
     for c in stdin.keys() {
         print_first_line(&mut stdout);
-        terminal_height_offset = handle_key_press(c, &mut lines, &mut cursor, terminal_height_offset);
-        print_text(&mut stdout, &lines, &cursor, terminal_height_offset);
+        handle_key_press(c, &mut lines, &mut cursor);
+        print_text(&mut stdout, &lines, &cursor);
         stdout.flush().unwrap();
     }
 
@@ -220,16 +199,16 @@ fn main() {
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+
     #[test]
     fn test_handle_key_press_first_char() {
         // Given
         let key = Ok(Key::Char('t'));
         let mut lines: Vec<String> = vec![String::new()];
-        let mut cursor = CursorPosition { x: 1, y: 1 };
-        let mut terminal_height_offset: usize = 0;
+        let mut cursor = CursorPosition { x: 1, y: 1, y_offset: 0 };
 
         // When
-        handle_key_press(key, &mut lines, &mut cursor, terminal_height_offset);
+        handle_key_press(key, &mut lines, &mut cursor);
 
         // Then
         assert_eq!(cursor.x, 2);
