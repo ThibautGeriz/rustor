@@ -60,7 +60,7 @@ fn handle_key_press(key: Result<Key, Error>,
                     cursor: &mut CursorPosition) {
     let nb_lines = lines.len() as u16;
     let (_, terminal_height) = termion::terminal_size().unwrap();
-    let y_position_in_file = cursor.y as usize + cursor.y_offset as usize;
+    let y_position_in_file = cursor.get_y_position_in_file() as usize;
 
     match key.unwrap() {
         Key::Char('\n') => {
@@ -98,39 +98,18 @@ fn handle_key_press(key: Result<Key, Error>,
             }
         }
         Key::Left => {
-            cursor.x = cmp::max(2, cursor.x) - 1;
+            cursor.move_left();
         }
         Key::Right => {
             let current_line = &mut lines[y_position_in_file - 1];
             let nb_char_in_current_line = current_line.len() as u16;
-            cursor.x = cmp::min(cursor.x + 1, nb_char_in_current_line + 1);
+            cursor.move_right(nb_char_in_current_line);
         }
         Key::Up => {
-            if cursor.y != 1 {
-                let nb_char_in_previous_line = lines[y_position_in_file - 2].len() as u16;
-                cursor.x = cmp::min(cursor.x, nb_char_in_previous_line + 1);
-            }
-             if cursor.y == 1 && cursor.y_offset >= 1 {
-                cursor.y_offset = cursor.y_offset - 1;
-                 
-            } else {
-                cursor.y = cmp::max(2, cursor.y) - 1;
-            }
-        
+            cursor.move_up(lines);
         }
         Key::Down => {
-            if y_position_in_file == lines.len() {
-                return;
-            }
-             if cursor.y != terminal_height - 1 {
-                let nb_char_in_next_line = lines[y_position_in_file].len() as u16;
-                cursor.x = cmp::min(cursor.x, nb_char_in_next_line + 1);
-            } 
-             if cursor.y == terminal_height - 1 {
-                cursor.y_offset = cursor.y_offset + 1;
-            } else {
-                cursor.y = cmp::min(terminal_height - 1, cursor.y + 1);
-            }
+            cursor.move_down(lines, terminal_height);
         }
         Key::Esc => exit(1),
         _ => (),
@@ -197,7 +176,6 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
     #[test]
