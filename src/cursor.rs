@@ -63,7 +63,11 @@ mod tests {
     #[test]
     fn should_move_left() {
         // Given
-        let mut cursor = CursorPosition { x: 3, y: 4, y_offset: 0 };
+        let mut cursor = CursorPosition {
+            x: 3,
+            y: 4,
+            y_offset: 0,
+        };
 
         // When
         cursor.move_left();
@@ -77,7 +81,11 @@ mod tests {
     #[test]
     fn should_not_move_left() {
         // Given
-        let mut cursor = CursorPosition { x: 1, y: 4, y_offset: 0 };
+        let mut cursor = CursorPosition {
+            x: 1,
+            y: 4,
+            y_offset: 0,
+        };
 
         // When
         cursor.move_left();
@@ -91,10 +99,16 @@ mod tests {
     #[test]
     fn should_move_right() {
         // Given
-        let mut cursor = CursorPosition { x: 4, y: 1, y_offset: 0 };
-        let lines: Vec<String> = vec![String::from("first line"),
-                                      String::from("second line"),
-                                      String::from("third line")];
+        let mut cursor = CursorPosition {
+            x: 4,
+            y: 1,
+            y_offset: 0,
+        };
+        let lines: Vec<String> = vec![
+            String::from("first line"),
+            String::from("second line"),
+            String::from("third line"),
+        ];
 
         // When
         cursor.move_right(&lines);
@@ -108,10 +122,16 @@ mod tests {
     #[test]
     fn should_not_move_right() {
         // Given
-        let mut cursor = CursorPosition { x: 11, y: 1, y_offset: 0 };
-        let lines: Vec<String> = vec![String::from("first line"),
-                                      String::from("second line"),
-                                      String::from("third line")];
+        let mut cursor = CursorPosition {
+            x: 11,
+            y: 1,
+            y_offset: 0,
+        };
+        let lines: Vec<String> = vec![
+            String::from("first line"),
+            String::from("second line"),
+            String::from("third line"),
+        ];
 
         // When
         cursor.move_right(&lines);
@@ -125,7 +145,11 @@ mod tests {
     #[test]
     fn should_get_y_position_in_file() {
         // Given
-        let mut cursor = CursorPosition { x: 10, y: 4, y_offset: 2 };
+        let cursor = CursorPosition {
+            x: 10,
+            y: 4,
+            y_offset: 2,
+        };
 
         // When
         let result = cursor.get_y_position_in_file();
@@ -134,11 +158,14 @@ mod tests {
         assert_eq!(result, 6);
     }
 
-
     #[test]
     fn should_not_move_up_when_on_the_first_line_of_the_file_and_terminal() {
         // Given
-        let mut cursor = CursorPosition { x: 10, y: 1, y_offset: 0 };
+        let mut cursor = CursorPosition {
+            x: 10,
+            y: 1,
+            y_offset: 0,
+        };
         let lines: Vec<String> = vec![String::from("first line")];
 
         // When
@@ -153,9 +180,12 @@ mod tests {
     #[test]
     fn should_move_up_only_the_offset() {
         // Given
-        let mut cursor = CursorPosition { x: 10, y: 1, y_offset: 1 };
-        let lines: Vec<String> = vec![String::from("first"),
-                                      String::from("we are here")];
+        let mut cursor = CursorPosition {
+            x: 10,
+            y: 1,
+            y_offset: 1,
+        };
+        let lines: Vec<String> = vec![String::from("first"), String::from("we are here")];
 
         // When
         cursor.move_up(&lines);
@@ -169,9 +199,12 @@ mod tests {
     #[test]
     fn should_move_up() {
         // Given
-        let mut cursor = CursorPosition { x: 10, y: 2, y_offset: 0 };
-        let lines: Vec<String> = vec![String::from("first"),
-                                      String::from("we are here")];
+        let mut cursor = CursorPosition {
+            x: 10,
+            y: 2,
+            y_offset: 0,
+        };
+        let lines: Vec<String> = vec![String::from("first"), String::from("we are here")];
 
         // When
         cursor.move_up(&lines);
@@ -185,10 +218,16 @@ mod tests {
     #[test]
     fn should_not_move_down_when_on_the_last_line_of_the_file() {
         // Given
-        let mut cursor = CursorPosition { x: 7, y: 3, y_offset: 0 };
-        let lines: Vec<String> = vec![String::from("first line"),
-                                      String::from("second line"),
-                                      String::from("third line")];
+        let mut cursor = CursorPosition {
+            x: 7,
+            y: 3,
+            y_offset: 0,
+        };
+        let lines: Vec<String> = vec![
+            String::from("first line"),
+            String::from("second line"),
+            String::from("third line"),
+        ];
         let terminal_size: u16 = 4;
 
         // When
@@ -203,10 +242,18 @@ mod tests {
     #[test]
     fn should_move_only_the_offset() {
         // Given
-        let mut cursor = CursorPosition { x: 7, y: 4, y_offset: 0 };
-        let lines: Vec<String> = vec![String::from("first line"), String::from("second line"),
-                                      String::from("third line"), String::from("fourth line"),
-                                      String::from("fifth line")];
+        let mut cursor = CursorPosition {
+            x: 7,
+            y: 4,
+            y_offset: 0,
+        };
+        let lines: Vec<String> = vec![
+            String::from("first line"),
+            String::from("second line"),
+            String::from("third line"),
+            String::from("fourth line"),
+            String::from("fifth line"),
+        ];
         let terminal_size: u16 = 5;
 
         // When
@@ -218,14 +265,21 @@ mod tests {
         assert_eq!(cursor.y_offset, 1);
     }
 
-
     #[test]
     fn should_move_down() {
         // Given
-        let mut cursor = CursorPosition { x: 7, y: 2, y_offset: 0 };
-        let lines: Vec<String> = vec![String::from("first line"), String::from("second line"),
-                                      String::from("third line"), String::from("fourth line"),
-                                      String::from("fifth line")];
+        let mut cursor = CursorPosition {
+            x: 7,
+            y: 2,
+            y_offset: 0,
+        };
+        let lines: Vec<String> = vec![
+            String::from("first line"),
+            String::from("second line"),
+            String::from("third line"),
+            String::from("fourth line"),
+            String::from("fifth line"),
+        ];
         let terminal_size: u16 = 5;
 
         // When
@@ -240,12 +294,18 @@ mod tests {
     #[test]
     fn should_move_to_end_file() {
         // Given
-        let mut cursor = CursorPosition { x: 4, y: 3, y_offset: 0 };
-        let lines: Vec<String> = vec![String::from("first"),
-                                      String::from("second"),
-                                      String::from("third line"),
-                                      String::from("fourth"),
-                                      String::from("fifth")];
+        let mut cursor = CursorPosition {
+            x: 4,
+            y: 3,
+            y_offset: 0,
+        };
+        let lines: Vec<String> = vec![
+            String::from("first"),
+            String::from("second"),
+            String::from("third line"),
+            String::from("fourth"),
+            String::from("fifth"),
+        ];
 
         // When
         cursor.move_to_end_of_line(&lines);

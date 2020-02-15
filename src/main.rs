@@ -50,7 +50,6 @@ fn move_content_from_current_line_to_previous_line(
     let previous_line = &mut lines[y_position_in_file - 2];
     previous_line.push_str(&current_line);
 }
-
 fn handle_key_press(
     key: Result<Key, Error>,
     lines: &mut Vec<String>,
@@ -171,7 +170,6 @@ fn main() {
     stdout.flush().unwrap();
 
     for c in stdin.keys() {
-        print_first_line(&mut stdout);
         let should_continue = handle_key_press(c, &mut lines, &mut cursor);
         if !should_continue {
             break;
