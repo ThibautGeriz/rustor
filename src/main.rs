@@ -1,11 +1,8 @@
 extern crate termion;
 
 use std::env;
-use std::fs::File;
 use std::io::Error;
-use std::io::{self, BufRead};
 use std::io::{stdin, stdout, Write};
-use std::path::Path;
 
 use termion::event::Key;
 use termion::input::TermRead;
@@ -13,9 +10,11 @@ use termion::raw::IntoRawMode;
 use termion::screen::*;
 
 use cursor::*;
+use file::*;
 use window::*;
 
 mod cursor;
+mod file;
 mod window;
 
 fn backspace_remove_characters_in_line(
@@ -54,6 +53,7 @@ fn handle_key_press(
     key: Result<Key, Error>,
     lines: &mut Vec<String>,
     cursor: &mut CursorPosition,
+    file_name_option: Option<&String>,
 ) -> bool {
     let (_, terminal_height) = termion::terminal_size().unwrap();
     let y_position_in_file = cursor.get_y_position_in_file() as usize;
@@ -107,6 +107,11 @@ fn handle_key_press(
         Key::Up => {
             cursor.move_up(lines);
         }
+        Key::Ctrl('s') => {
+            if let Some(file_name) = file_name_option {
+                save_to_file(file_name, lines).unwrap();
+            }
+        }
         Key::Down => {
             cursor.move_down(lines, terminal_height);
         }
@@ -118,40 +123,23 @@ fn handle_key_press(
     return true;
 }
 
-fn read_lines<P>(file_name: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(file_name)?;
-    Ok(io::BufReader::new(file).lines())
-}
-
-fn init_lines(args: &Vec<String>) -> Vec<String> {
-    let mut lines: Vec<String> = vec![];
-    if args.len() > 1 {
-        let file_name = &args[1];
-        if let Ok(lines_in_file) = read_lines(file_name) {
-            for line_in_file in lines_in_file {
-                if let Ok(line) = line_in_file {
-                    lines.push(line);
-                }
-            }
-        }
-    } else {
-        lines.push(String::new());
-    }
-    return lines;
-}
-
 fn check_arguments(args: &Vec<String>) {
     if args.len() > 2 {
         panic!("Too many arguments")
     }
 }
 
+fn get_file_name(args: &Vec<String>) -> Option<&String> {
+    if args.len() == 1 {
+        return None;
+    }
+    return Some(&args[1]);
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     check_arguments(&args);
+    let file_name_option = get_file_name(&args);
 
     let stdin = stdin();
     let mut stdout = AlternateScreen::from(stdout().into_raw_mode().unwrap());
@@ -164,13 +152,13 @@ fn main() {
 
     print_first_line(&mut stdout);
 
-    let mut lines = init_lines(&args);
+    let mut lines = init_lines(&file_name_option);
 
     print_text(&mut stdout, &lines, &cursor);
     stdout.flush().unwrap();
 
     for c in stdin.keys() {
-        let should_continue = handle_key_press(c, &mut lines, &mut cursor);
+        let should_continue = handle_key_press(c, &mut lines, &mut cursor, file_name_option);
         if !should_continue {
             break;
         }
@@ -190,6 +178,8 @@ mod tests {
         // Given
         let key = Ok(Key::Char('t'));
         let mut lines: Vec<String> = vec![String::new()];
+        let file_name = String::from("toto");
+        let file_name_option = Some(&file_name);
         let mut cursor = CursorPosition {
             x: 1,
             y: 1,
@@ -197,12 +187,36 @@ mod tests {
         };
 
         // When
-        handle_key_press(key, &mut lines, &mut cursor);
+        handle_key_press(key, &mut lines, &mut cursor, file_name_option);
 
         // Then
         assert_eq!(cursor.x, 2);
         assert_eq!(cursor.y, 1);
         assert_eq!(lines.len(), 1);
         assert_eq!(lines[0], "t");
+    }
+
+    #[test]
+    fn get_file_name_should_return_nothing_if_no_args() {
+        // Given
+        let args = vec![String::from("rustor")];
+
+        // When
+        let result = get_file_name(&args);
+
+        // Then
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn get_file_name_should_return_the_name_of_the_file() {
+        // Given
+        let args = vec![String::from("rustor"), String::from("stuff.txt")];
+
+        // When
+        let result = get_file_name(&args);
+
+        // Then
+        assert_eq!(Some(&String::from("stuff.txt")), result);
     }
 }
