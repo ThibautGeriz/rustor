@@ -57,7 +57,7 @@ mod tests {
   fn init_lines_should_return_an_empty_line_when_there_the_file_is_empty() {
     // Given
     let file_name = String::from("test_file.txt");
-    let mut file = File::create(&file_name);
+    let _file = File::create(&file_name);
     let file_name_option: Option<&String> = Some(&file_name);
     let expected: Vec<String> = vec![String::new()];
 
