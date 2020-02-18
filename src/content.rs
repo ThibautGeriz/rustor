@@ -121,7 +121,7 @@ mod tests {
     let mut cursor = CursorPosition {
       x: 1,
       y: 1,
-      y_offset: 0,
+      y_offset: 0
     };
 
     // When
