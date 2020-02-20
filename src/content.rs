@@ -10,8 +10,8 @@ pub fn handle_key_press(
   lines: &mut Vec<String>,
   cursor: &mut CursorPosition,
   file_name_option: Option<&String>,
+  terminal_height: u16
 ) -> bool {
-  let (_, terminal_height) = termion::terminal_size().unwrap();
   let y_position_in_file = cursor.get_y_position_in_file() as usize;
 
   match key.unwrap() {
@@ -114,18 +114,19 @@ mod tests {
   #[test]
   fn test_handle_key_press_first_char() {
     // Given
-    let key = Ok(Key::Char('t'));
+    let key: Result<Key, Error> = Ok(Key::Char('t'));
+    let terminal_height: u16 = 50;
     let mut lines: Vec<String> = vec![String::new()];
     let file_name = String::from("toto");
     let file_name_option = Some(&file_name);
     let mut cursor = CursorPosition {
       x: 1,
       y: 1,
-      y_offset: 0,
+      y_offset: 0
     };
 
     // When
-    handle_key_press(key, &mut lines, &mut cursor, file_name_option);
+    handle_key_press(key, &mut lines, &mut cursor, file_name_option, terminal_height);
 
     // Then
     assert_eq!(cursor.x, 2);

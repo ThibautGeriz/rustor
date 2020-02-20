@@ -21,7 +21,8 @@ pub fn init_lines(file_name_option: &Option<&String>) -> Vec<String> {
         }
       }
     }
-  } else {
+  }
+  if lines.is_empty() {
     lines.push(String::new());
   }
   return lines;
@@ -32,4 +33,40 @@ pub fn save_to_file(file_name: &String, lines: &Vec<String>) -> std::io::Result<
   let content: String = lines.join("\n");
   file.write_all(content.as_bytes())?;
   Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use std::fs;
+
+  #[test]
+  fn init_lines_should_return_an_empty_line_when_there_is_no_file() {
+    // Given
+    let file_name_option: Option<&String> = None;
+    let expected: Vec<String> = vec![String::new()];
+
+    // When
+    let result = init_lines(&file_name_option);
+
+    // Then
+    assert_eq!(expected, result);
+  }
+
+  #[test]
+  fn init_lines_should_return_an_empty_line_when_there_the_file_is_empty() {
+    // Given
+    let file_name = String::from("test_file.txt");
+    let _file = File::create(&file_name);
+    let file_name_option: Option<&String> = Some(&file_name);
+    let expected: Vec<String> = vec![String::new()];
+
+    // When
+    let result = init_lines(&file_name_option);
+
+    // Then
+    assert_eq!(expected, result);
+
+    fs::remove_file(&file_name);
+  }
 }

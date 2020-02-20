@@ -39,7 +39,8 @@ fn main() {
     stdout.flush().unwrap();
 
     for c in stdin.keys() {
-        let should_continue = handle_key_press(c, &mut lines, &mut cursor, file_name_option);
+        let (_, terminal_height) = termion::terminal_size().unwrap();
+        let should_continue = handle_key_press(c, &mut lines, &mut cursor, file_name_option, terminal_height);
         if !should_continue {
             break;
         }
