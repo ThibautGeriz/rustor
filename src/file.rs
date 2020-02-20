@@ -53,7 +53,7 @@ mod tests {
     assert_eq!(expected, result);
   }
 
-//  #[test]
+  #[test]
   fn init_lines_should_return_an_empty_line_when_there_the_file_is_empty() {
     // Given
     let file_name = String::from("test_file.txt");
