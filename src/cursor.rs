@@ -1,6 +1,6 @@
 use std::cmp;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CursorPosition {
     pub x: u16,
     pub y: u16,
@@ -8,6 +8,14 @@ pub struct CursorPosition {
 }
 
 impl CursorPosition {
+
+    pub fn new() -> CursorPosition {
+        return CursorPosition {
+            x: 1,
+            y: 1,
+            y_offset: 0,
+        }
+    }
     pub fn move_left(&mut self) {
         self.x = cmp::max(1, self.x - 1);
     }

@@ -55,29 +55,30 @@ pub fn print_text<W: Write>(stream: &mut W, lines: &Vec<String>, cursor: &Cursor
         lines.len(),
         terminal_height as usize - 1 + cursor.y_offset as usize,
     );
-
+    let white_line = (0..terminal_width).map(|_| ' ').collect::<String>();
     for (index, l) in lines[cursor.y_offset as usize..max_line].iter().enumerate() {
-        if l.len() as u16 > terminal_width - left_pad - 2 {
-            let mut line_content = l.clone();
-            line_content.truncate((terminal_width - left_pad - 2) as usize);
-            print_line(
-                stream,
-                left_pad,
-                index as u16 + 1,
-                index as u16 + 1 + cursor.y_offset,
-                &line_content,
-                &cursor,
-            )
-        } else {
-            print_line(
-                stream,
-                left_pad,
-                index as u16 + 1,
-                index as u16 + 1 + cursor.y_offset,
-                &l,
-                &cursor,
-            )
-        }
+        let mut line_content = l.clone();
+        line_content.push_str(&white_line);
+        line_content.truncate((terminal_width - left_pad - 2) as usize);
+        print_line(
+            stream,
+            left_pad,
+            index as u16 + 1,
+            index as u16 + 1 + cursor.y_offset,
+            &line_content,
+            &cursor,
+        )
+    }
+
+    if lines.len() < terminal_height as usize - 1 {
+        write!(
+            stream,
+            "{}{}{}",
+            termion::cursor::Goto(1, lines.len() as u16 + 2),
+            white_line,
+            termion::cursor::Goto(left_pad + cursor.x + 2, cursor.y + 1),
+        )
+        .unwrap();
     }
 }
 
