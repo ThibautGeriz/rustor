@@ -1,4 +1,4 @@
-use std::io::Error;
+use std::io::{Cursor, Error};
 
 use termion::event::Key;
 
@@ -6,50 +6,85 @@ use cursor::*;
 use file::*;
 
 #[derive(Debug)]
-pub struct Content {
+pub struct Editor {
     pub lines: Vec<String>,
+    pub cursor: CursorPosition,
 }
 
-impl Content {
-    pub fn new() -> Content {
-        return Content {
-            lines: vec![String::new()]
+impl Editor {
+    pub fn new() -> Editor {
+        return Editor {
+            lines: vec![String::new()],
+            cursor: CursorPosition { x: 1, y: 1, y_offset: 0 },
         };
     }
 
-    pub fn insert(&mut self, cursor: &CursorPosition, c: char) {
+    pub fn from(lines: Vec<String>) -> Editor {
+        return Editor {
+            lines,
+            cursor: CursorPosition::new(),
+        };
+    }
+
+    pub fn insert(&mut self, c: char, terminal_height: u16) {
         if c == '\n' {
-            self.insert_new_line(cursor);
+            self.insert_new_line(terminal_height);
         } else {
-            self.insert_char(cursor, c);
+            self.insert_char(c);
         }
     }
 
-    fn insert_new_line(&mut self, cursor: &CursorPosition) {
-        let y_position_in_file = cursor.get_y_position_in_file() as usize;
+    fn insert_new_line(&mut self, terminal_height: u16) {
+        let y_position_in_file = self.cursor.get_y_position_in_file() as usize;
         let current_line = self.lines[y_position_in_file - 1].clone();
         let nb_char_in_current_line = current_line.len() as u16;
-        let end_of_line = &current_line[cursor.x as usize - 1..nb_char_in_current_line as usize];
+        let end_of_line = &current_line[self.cursor.x as usize - 1..nb_char_in_current_line as usize];
         self.lines.insert(y_position_in_file, String::from(end_of_line));
         let current_line = &mut self.lines[y_position_in_file - 1];
-        current_line.truncate(cursor.x as usize - 1);
+        current_line.truncate(self.cursor.x as usize - 1);
+        if self.cursor.y == terminal_height - 1 {
+            self.cursor.x = 1;
+            self.cursor.y_offset = self.cursor.y_offset + 1;
+        } else {
+            self.cursor.x = 1;
+            self.cursor.y = self.cursor.y + 1;
+        }
     }
 
-    fn insert_char(&mut self, cursor: &CursorPosition, c: char) {
-        let current_line = &mut self.lines[cursor.get_y_position_in_file() as usize - 1];
-        current_line.insert(cursor.x as usize - 1, c);
+    fn insert_char(&mut self, c: char) {
+        let current_line = &mut self.lines[self.cursor.get_y_position_in_file() as usize - 1];
+        current_line.insert(self.cursor.x as usize - 1, c);
+        self.cursor.x = self.cursor.x + 1;
     }
 
-    pub fn remove(&mut self, cursor: &CursorPosition) {
-        let y_position_in_file = cursor.get_y_position_in_file() as usize;
-        if cursor.x > 1 {
-            let current_line = &mut self.lines[y_position_in_file - 1];
-            current_line.remove(cursor.x as usize - 2);
+    pub fn remove(&mut self, terminal_height: u16) {
+        let y_position_in_file = self.cursor.get_y_position_in_file() as usize;
+        if self.cursor.x > 1 {
+            self.remove_char();
         } else if y_position_in_file > 1 {
-            let current_line = self.lines[y_position_in_file - 1].clone();
-            let previous_line = &mut self.lines[y_position_in_file - 2];
-            previous_line.push_str(&current_line);
-            self.lines.remove(y_position_in_file - 1);
+            self.remove_line(terminal_height);
+        }
+    }
+
+    fn remove_char(&mut self) {
+        let y_position_in_file = self.cursor.get_y_position_in_file() as usize;
+        let current_line = &mut self.lines[y_position_in_file - 1];
+        current_line.remove(self.cursor.x as usize - 2);
+        self.cursor.move_left();
+    }
+
+    fn remove_line(&mut self, terminal_height: u16) {
+        let cursor_before = self.cursor.clone();
+        let y_position_in_file = cursor_before.get_y_position_in_file() as usize;
+        self.cursor.move_up(&self.lines);
+        self.cursor.move_to_end_of_line(&self.lines);
+        let current_line = self.lines[y_position_in_file - 1].clone();
+        let previous_line = &mut self.lines[y_position_in_file - 2];
+        previous_line.push_str(&current_line);
+        self.lines.remove(y_position_in_file - 1);
+        if self.cursor.y_offset > 0 && self.lines.len() as u16 - self.cursor.y_offset < terminal_height {
+            self.cursor.y_offset = self.cursor.y_offset - 1;
+            self.cursor.y = cursor_before.y;
         }
     }
 }
@@ -57,59 +92,35 @@ impl Content {
 
 pub fn handle_key_press(
     key: Result<Key, Error>,
-    content: &mut Content,
-    cursor: &mut CursorPosition,
+    editor: &mut Editor,
     file_name_option: Option<&String>,
     terminal_height: u16,
 ) -> bool {
-    let y_position_in_file = cursor.get_y_position_in_file() as usize;
+    let y_position_in_file = editor.cursor.get_y_position_in_file() as usize;
 
     match key.unwrap() {
-        Key::Char('\n') => {
-            content.insert(&cursor, '\n');
-            if cursor.y == terminal_height - 1 {
-                cursor.x = 1;
-                cursor.y_offset = cursor.y_offset + 1;
-            } else {
-                cursor.x = 1;
-                cursor.y = cursor.y + 1;
-            }
-        }
         Key::Char(c) => {
-            content.insert(&cursor, c);
-            cursor.x = cursor.x + 1;
+            editor.insert(c, terminal_height);
         }
         Key::Backspace => {
-            if cursor.x != 1 {
-                content.remove(&cursor);
-                cursor.move_left();
-            } else if y_position_in_file > 1 {
-                let cursor_before = cursor.clone();
-                cursor.move_up(&content.lines);
-                cursor.move_to_end_of_line(&content.lines);
-                content.remove(& cursor_before);
-                if cursor.y_offset > 0 && content.lines.len() as u16 - cursor.y_offset < terminal_height {
-                    cursor.y_offset = cursor.y_offset - 1;
-                    cursor.y = cursor_before.y;
-                }
-            }
+            editor.remove(terminal_height);
         }
         Key::Left => {
-            cursor.move_left();
+            editor.cursor.move_left();
         }
         Key::Right => {
-            cursor.move_right(& content.lines);
+            editor.cursor.move_right(&editor.lines);
         }
         Key::Up => {
-            cursor.move_up(& content.lines);
+            editor.cursor.move_up(&editor.lines);
         }
         Key::Ctrl('s') => {
             if let Some(file_name) = file_name_option {
-                save_to_file(file_name, & content.lines).unwrap();
+                save_to_file(file_name, &editor.lines).unwrap();
             }
         }
         Key::Down => {
-            cursor.move_down(& content.lines, terminal_height);
+            editor.cursor.move_down(&editor.lines, terminal_height);
         }
         Key::Esc => {
             return false;
@@ -130,22 +141,18 @@ mod tests {
         let terminal_height: u16 = 50;
         let file_name = String::from("toto");
         let file_name_option = Some(&file_name);
-        let mut cursor = CursorPosition {
-            x: 1,
-            y: 1,
-            y_offset: 0,
-        };
-        let mut content = Content::new();
+        let mut editor = Editor::new();
 
 
         // When
-        handle_key_press(key,  &mut content, &mut cursor, file_name_option, terminal_height);
+        handle_key_press(key, &mut editor, file_name_option, terminal_height);
 
         // Then
-        assert_eq!(cursor.x, 2);
-        assert_eq!(cursor.y, 1);
-        assert_eq!(content.lines.len(), 1);
-        assert_eq!(content.lines[0], "t");
+        assert_eq!(editor.cursor.x, 2);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.lines.len(), 1);
+        assert_eq!(editor.lines[0], "t");
+        assert_eq!(editor.lines[0], "t");
     }
 
 
@@ -153,14 +160,17 @@ mod tests {
     fn insert_char_should_insert_first_char() {
         // Given
         let cursor = CursorPosition::new();
-        let mut content = Content::new();
+        let mut editor = Editor::new();
 
 
         // When
-        content.insert(&cursor, 'x');
+        editor.insert('x', 36);
 
         // Then
-        assert_eq!(content.lines, vec!["x"]);
+        assert_eq!(editor.lines, vec!["x"]);
+        assert_eq!(editor.cursor.x, 2);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 0);
     }
 
     #[test]
@@ -171,16 +181,20 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
-        let mut content = Content {
-            lines: vec![String::from("this is  test")]
+        let mut editor = Editor {
+            lines: vec![String::from("this is  test")],
+            cursor,
         };
 
 
         // When
-        content.insert(&cursor, 'a');
+        editor.insert('a', 36);
 
         // Then
-        assert_eq!(content.lines, vec!["this is a test"]);
+        assert_eq!(editor.lines, vec!["this is a test"]);
+        assert_eq!(editor.cursor.x, 10);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 0);
     }
 
     #[test]
@@ -191,16 +205,20 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
-        let mut content = Content {
-            lines: vec![String::from("this is a test")]
+        let mut editor = Editor {
+            lines: vec![String::from("this is a test")],
+            cursor,
         };
 
 
         // When
-        content.insert(&cursor, '\n');
+        editor.insert('\n', 36);
 
         // Then
-        assert_eq!(content.lines, vec!["this is a test", ""]);
+        assert_eq!(editor.lines, vec!["this is a test", ""]);
+        assert_eq!(editor.cursor.x, 1);
+        assert_eq!(editor.cursor.y, 2);
+        assert_eq!(editor.cursor.y_offset, 0);
     }
 
     #[test]
@@ -211,16 +229,20 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
-        let mut content = Content {
-            lines: vec![String::from("this is a test")]
+        let mut editor = Editor {
+            lines: vec![String::from("this is a test")],
+            cursor,
         };
 
 
         // When
-        content.insert(&cursor, '\n');
+        editor.insert('\n', 36);
 
         // Then
-        assert_eq!(content.lines, vec!["this is a", " test"]);
+        assert_eq!(editor.lines, vec!["this is a", " test"]);
+        assert_eq!(editor.cursor.x, 1);
+        assert_eq!(editor.cursor.y, 2);
+        assert_eq!(editor.cursor.y_offset, 0);
     }
 
     #[test]
@@ -231,16 +253,20 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
-        let mut content = Content {
-            lines: vec![String::from("this is aw test")]
+        let mut editor = Editor {
+            lines: vec![String::from("this is aw test")],
+            cursor,
         };
 
 
         // When
-        content.remove(&cursor);
+        editor.remove(36);
 
         // Then
-        assert_eq!(content.lines, vec!["this is a test"]);
+        assert_eq!(editor.lines, vec!["this is a test"]);
+        assert_eq!(editor.cursor.x, 10);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 0);
     }
 
     #[test]
@@ -251,16 +277,20 @@ mod tests {
             y: 2,
             y_offset: 0,
         };
-        let mut content = Content {
-            lines: vec![String::from("this is a test"), String::new(), String::from("this is a test2")]
+        let mut editor = Editor {
+            lines: vec![String::from("this is a test"), String::new(), String::from("this is a test2")],
+            cursor,
         };
 
 
         // When
-        content.remove(&cursor);
+        editor.remove(36);
 
         // Then
-        assert_eq!(content.lines, vec!["this is a test", "this is a test2"]);
+        assert_eq!(editor.lines, vec!["this is a test", "this is a test2"]);
+        assert_eq!(editor.cursor.x, 15);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 0);
     }
 
     #[test]
@@ -271,16 +301,20 @@ mod tests {
             y: 2,
             y_offset: 0,
         };
-        let mut content = Content {
-            lines: vec![String::from("this is a test"), String::from("this is a test2"), String::from("this is a test3")]
+        let mut editor = Editor {
+            lines: vec![String::from("this is a test"), String::from("this is a test2"), String::from("this is a test3")],
+            cursor,
         };
 
 
         // When
-        content.remove(&cursor);
+        editor.remove(36);
 
         // Then
-        assert_eq!(content.lines, vec!["this is a testthis is a test2", "this is a test3"]);
+        assert_eq!(editor.lines, vec!["this is a testthis is a test2", "this is a test3"]);
+        assert_eq!(editor.cursor.x, 15);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 0);
     }
 
     #[test]
@@ -291,16 +325,20 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
-        let mut content = Content {
-            lines: vec![String::from("this is a test"), String::from("this is a test2")]
+        let mut editor = Editor {
+            lines: vec![String::from("this is a test"), String::from("this is a test2")],
+            cursor,
         };
 
 
         // When
-        content.remove(&cursor);
+        editor.remove(36);
 
         // Then
-        assert_eq!(content.lines, vec!["this is a test", "this is a test2"]);
+        assert_eq!(editor.lines, vec!["this is a test", "this is a test2"]);
+        assert_eq!(editor.cursor.x, 1);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 0);
     }
 
     #[test]
@@ -311,19 +349,23 @@ mod tests {
             y: 3,
             y_offset: 1,
         };
-        let mut content = Content {
+        let mut editor = Editor {
             lines: vec![String::from("this is a test"), String::from("this is a test2"),
                         String::from("this is a test3"),
-                        String::from("this is a test4")]
+                        String::from("this is a test4")],
+            cursor,
         };
 
 
         // When
-        content.remove(&cursor);
+        editor.remove(36);
 
         // Then
-        assert_eq!(content.lines, vec!["this is a test", "this is a test2",
-                                       "this is a test3", "thi is a test4"]);
+        assert_eq!(editor.lines, vec!["this is a test", "this is a test2",
+                                      "this is a test3", "thi is a test4"]);
+        assert_eq!(editor.cursor.x, 4);
+        assert_eq!(editor.cursor.y, 3);
+        assert_eq!(editor.cursor.y_offset, 1);
     }
 
     #[test]
@@ -334,18 +376,49 @@ mod tests {
             y: 1,
             y_offset: 1,
         };
-        let mut content = Content {
+        let mut editor = Editor {
             lines: vec![String::from("this is a test"), String::from("this is a test2"),
                         String::from("this is a test3"),
-                        String::from("this is a test4")]
+                        String::from("this is a test4")],
+            cursor,
         };
 
 
         // When
-        content.remove(&cursor);
+        editor.remove(36);
 
         // Then
-        assert_eq!(content.lines, vec!["this is a test", "thi is a test2",
-                                       "this is a test3", "this is a test4"]);
+        assert_eq!(editor.lines, vec!["this is a test", "thi is a test2",
+                                      "this is a test3", "this is a test4"]);
+        assert_eq!(editor.cursor.x, 4);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 1);
+    }
+
+    #[test]
+    fn remove_should_remove_line_with_offset_reduced() {
+        // Given
+        let cursor = CursorPosition {
+            x: 1,
+            y: 1,
+            y_offset: 1,
+        };
+        let mut editor = Editor {
+            lines: vec![String::from("this is a test"), String::from("this is a test2"),
+                        String::from("this is a test3"),
+                        String::from("this is a test4")],
+            cursor,
+        };
+
+
+        // When
+        editor.remove(5);
+
+        // Then
+        assert_eq!(editor.lines, vec!["this is a testthis is a test2",
+                                      "this is a test3", "this is a test4"]);
+        assert_eq!(editor.cursor.x, 15);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 0);
     }
 }

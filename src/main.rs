@@ -25,26 +25,22 @@ fn main() {
     let stdin = stdin();
     let mut stdout = AlternateScreen::from(stdout().into_raw_mode().unwrap());
 
-    let mut cursor = CursorPosition::new();
-
     print_first_line(&mut stdout);
 
     let lines = init_lines(&file_name_option);
+    let mut editor = Editor::from(lines);
 
-    print_text(&mut stdout, &lines, &cursor);
+    print_text(&mut stdout, &editor);
     stdout.flush().unwrap();
 
-    let mut content = Content {
-        lines
-    };
 
     for c in stdin.keys() {
         let (_, terminal_height) = termion::terminal_size().unwrap();
-        let should_continue = handle_key_press(c, &mut content, &mut cursor, file_name_option, terminal_height);
+        let should_continue = handle_key_press(c, &mut editor, file_name_option, terminal_height);
         if !should_continue {
             break;
         }
-        print_text(&mut stdout, &content.lines, &cursor);
+        print_text(&mut stdout, &editor);
         stdout.flush().unwrap();
     }
 
