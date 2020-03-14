@@ -98,18 +98,18 @@ pub fn handle_key_press(
             cursor.move_left();
         }
         Key::Right => {
-            cursor.move_right(&mut content.lines);
+            cursor.move_right(& content.lines);
         }
         Key::Up => {
-            cursor.move_up(&mut content.lines);
+            cursor.move_up(& content.lines);
         }
         Key::Ctrl('s') => {
             if let Some(file_name) = file_name_option {
-                save_to_file(file_name, &mut content.lines).unwrap();
+                save_to_file(file_name, & content.lines).unwrap();
             }
         }
         Key::Down => {
-            cursor.move_down(&mut content.lines, terminal_height);
+            cursor.move_down(& content.lines, terminal_height);
         }
         Key::Esc => {
             return false;
