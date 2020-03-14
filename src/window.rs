@@ -5,8 +5,8 @@ use std::io::Write;
 
 use termion::{color, style};
 
-use cursor::*;
 use content::Editor;
+use cursor::*;
 
 pub fn print_line<W: Write>(
     stream: &mut W,
@@ -27,7 +27,7 @@ pub fn print_line<W: Write>(
         content,
         termion::cursor::Goto(left_pad + cursor.x + 2, cursor.y + 1),
     )
-    .unwrap();
+        .unwrap();
 }
 
 pub fn print_first_line<W: Write>(stream: &mut W) {
@@ -41,7 +41,7 @@ pub fn print_first_line<W: Write>(stream: &mut W) {
         style::Reset,
         termion::cursor::Goto(1, 2)
     )
-    .unwrap();
+        .unwrap();
 }
 
 pub fn get_number_of_chars_of_u16(num: &u16) -> u16 {
@@ -49,15 +49,15 @@ pub fn get_number_of_chars_of_u16(num: &u16) -> u16 {
     return base.len() as u16;
 }
 
-pub fn print_text<W: Write>(stream: &mut W, content: &Editor) {
+pub fn print_text<W: Write>(stream: &mut W, editor: &Editor) {
     let (terminal_width, terminal_height) = termion::terminal_size().unwrap();
-    let left_pad = get_number_of_chars_of_u16(&(content.lines.len() as u16));
+    let left_pad = get_number_of_chars_of_u16(&(editor.lines.len() as u16));
     let max_line = cmp::min(
-        content.lines.len(),
-        terminal_height as usize - 1 + content.cursor.y_offset as usize,
+        editor.lines.len(),
+        terminal_height as usize - 1 + editor.cursor.y_offset as usize,
     );
     let white_line = (0..terminal_width).map(|_| ' ').collect::<String>();
-    for (index, l) in content.lines[content.cursor.y_offset as usize..max_line].iter().enumerate() {
+    for (index, l) in editor.lines[editor.cursor.y_offset as usize..max_line].iter().enumerate() {
         let mut line_content = l.clone();
         line_content.push_str(&white_line);
         line_content.truncate((terminal_width - left_pad - 2) as usize);
@@ -65,21 +65,21 @@ pub fn print_text<W: Write>(stream: &mut W, content: &Editor) {
             stream,
             left_pad,
             index as u16 + 1,
-            index as u16 + 1 + content.cursor.y_offset,
+            index as u16 + 1 + editor.cursor.y_offset,
             &line_content,
-            &content.cursor,
+            &editor.cursor,
         )
     }
 
-    if content.lines.len() < terminal_height as usize - 1 {
+    if editor.lines.len() < terminal_height as usize - 1 {
         write!(
             stream,
             "{}{}{}",
-            termion::cursor::Goto(1, content.lines.len() as u16 + 2),
+            termion::cursor::Goto(1, editor.lines.len() as u16 + 2),
             white_line,
-            termion::cursor::Goto(left_pad + content.cursor.x + 2, content.cursor.y + 1),
+            termion::cursor::Goto(left_pad + editor.cursor.x + 2, editor.cursor.y + 1),
         )
-        .unwrap();
+            .unwrap();
     }
 }
 
