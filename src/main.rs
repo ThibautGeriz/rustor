@@ -7,12 +7,11 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::screen::*;
 
-use content::*;
-use cursor::*;
+use editor::*;
 use file::*;
 use window::*;
 
-mod content;
+mod editor;
 mod cursor;
 mod file;
 mod window;

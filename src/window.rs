@@ -5,7 +5,7 @@ use std::io::Write;
 
 use termion::{color, style};
 
-use content::Editor;
+use editor::Editor;
 use cursor::*;
 
 pub fn print_line<W: Write>(
