@@ -132,7 +132,7 @@ mod tests {
         let terminal_height: u16 = 50;
         let file_name = String::from("toto");
         let file_name_option = Some(&file_name);
-        let mut editor = Editor::new();
+        let mut editor = Editor::from(vec![String::new()]);
 
 
         // When
@@ -150,7 +150,7 @@ mod tests {
     #[test]
     fn insert_char_should_insert_first_char() {
         // Given
-        let mut editor = Editor::new();
+        let mut editor = Editor::from(vec![String::new()]);
 
         // When
         editor.insert('x', 36);
