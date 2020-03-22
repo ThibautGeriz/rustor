@@ -1,4 +1,4 @@
-use std::io::{Cursor, Error};
+use std::io::Error;
 
 use termion::event::Key;
 
@@ -12,13 +12,6 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new() -> Editor {
-        return Editor {
-            lines: vec![String::new()],
-            cursor: CursorPosition { x: 1, y: 1, y_offset: 0 },
-        };
-    }
-
     pub fn from(lines: Vec<String>) -> Editor {
         return Editor {
             lines,
@@ -96,8 +89,6 @@ pub fn handle_key_press(
     file_name_option: Option<&String>,
     terminal_height: u16,
 ) -> bool {
-    let y_position_in_file = editor.cursor.get_y_position_in_file() as usize;
-
     match key.unwrap() {
         Key::Char(c) => {
             editor.insert(c, terminal_height);
@@ -141,7 +132,7 @@ mod tests {
         let terminal_height: u16 = 50;
         let file_name = String::from("toto");
         let file_name_option = Some(&file_name);
-        let mut editor = Editor::new();
+        let mut editor = Editor::from(vec![String::new()]);
 
 
         // When
@@ -159,9 +150,7 @@ mod tests {
     #[test]
     fn insert_char_should_insert_first_char() {
         // Given
-        let cursor = CursorPosition::new();
-        let mut editor = Editor::new();
-
+        let mut editor = Editor::from(vec![String::new()]);
 
         // When
         editor.insert('x', 36);

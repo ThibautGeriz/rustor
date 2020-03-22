@@ -67,6 +67,6 @@ mod tests {
     // Then
     assert_eq!(expected, result);
 
-    fs::remove_file(&file_name);
+    fs::remove_file(&file_name).unwrap();
   }
 }
