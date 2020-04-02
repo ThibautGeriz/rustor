@@ -11,8 +11,8 @@ use editor::*;
 use file::*;
 use window::*;
 
-mod editor;
 mod cursor;
+mod editor;
 mod file;
 mod window;
 
@@ -26,12 +26,11 @@ fn main() {
 
     print_first_line(&mut stdout);
 
-    let lines = init_lines(&file_name_option);
+    let lines = init_lines(file_name_option);
     let mut editor = Editor::from(lines);
 
     print_text(&mut stdout, &editor);
     stdout.flush().unwrap();
-
 
     for c in stdin.keys() {
         let (_, terminal_height) = termion::terminal_size().unwrap();
@@ -46,17 +45,17 @@ fn main() {
     write!(stdout, "{}", termion::cursor::Show).unwrap();
 }
 
-fn check_arguments(args: &Vec<String>) {
+fn check_arguments(args: &[String]) {
     if args.len() > 2 {
         panic!("Too many arguments")
     }
 }
 
-fn get_file_name(args: &Vec<String>) -> Option<&String> {
+fn get_file_name(args: &[String]) -> Option<&String> {
     if args.len() == 1 {
         return None;
     }
-    return Some(&args[1]);
+    Some(&args[1])
 }
 
 #[cfg(test)]

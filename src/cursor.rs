@@ -8,9 +8,8 @@ pub struct CursorPosition {
 }
 
 impl CursorPosition {
-
     pub fn new() -> CursorPosition {
-        return CursorPosition {
+        CursorPosition {
             x: 1,
             y: 1,
             y_offset: 0,
@@ -19,29 +18,29 @@ impl CursorPosition {
     pub fn move_left(&mut self) {
         self.x = cmp::max(1, self.x - 1);
     }
-    pub fn move_right(&mut self, lines: &Vec<String>) {
+    pub fn move_right(&mut self, lines: &[String]) {
         let y_position_in_file = self.get_y_position_in_file() as usize;
         let nb_char_in_current_line = lines[y_position_in_file - 1].len() as u16;
         self.x = cmp::min(self.x + 1, nb_char_in_current_line + 1);
     }
     pub fn get_y_position_in_file(&self) -> u16 {
-        return self.y + self.y_offset;
+        self.y + self.y_offset
     }
 
-    pub fn move_up(&mut self, lines: &Vec<String>) {
+    pub fn move_up(&mut self, lines: &[String]) {
         let y_position_in_file = self.get_y_position_in_file();
         if y_position_in_file > 1 {
             let nb_char_in_previous_line = lines[y_position_in_file as usize - 2].len() as u16;
             self.x = cmp::min(self.x, nb_char_in_previous_line + 1);
         }
         if self.y == 1 && self.y_offset >= 1 {
-            self.y_offset = self.y_offset - 1;
+            self.y_offset -= 1;
         } else {
             self.y = cmp::max(2, self.y) - 1;
         }
     }
 
-    pub fn move_down(&mut self, lines: &Vec<String>, terminal_height: u16) {
+    pub fn move_down(&mut self, lines: &[String], terminal_height: u16) {
         let y_position_in_file = self.get_y_position_in_file() as usize;
         if y_position_in_file == lines.len() {
             return;
@@ -51,13 +50,13 @@ impl CursorPosition {
             self.x = cmp::min(self.x, nb_char_in_next_line + 1);
         }
         if self.y == terminal_height - 1 {
-            self.y_offset = self.y_offset + 1;
+            self.y_offset += 1;
         } else {
             self.y = cmp::min(terminal_height - 1, self.y + 1);
         }
     }
 
-    pub fn move_to_end_of_line(&mut self, lines: &Vec<String>) {
+    pub fn move_to_end_of_line(&mut self, lines: &[String]) {
         let y_position_in_file = self.get_y_position_in_file() as usize;
         let number_of_char_in_line = lines[y_position_in_file - 1].len() as u16;
         self.x = number_of_char_in_line + 1;

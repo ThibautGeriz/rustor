@@ -13,10 +13,10 @@ pub struct Editor {
 
 impl Editor {
     pub fn from(lines: Vec<String>) -> Editor {
-        return Editor {
+        Editor {
             lines,
             cursor: CursorPosition::new(),
-        };
+        }
     }
 
     pub fn insert(&mut self, c: char, terminal_height: u16) {
@@ -31,23 +31,25 @@ impl Editor {
         let y_position_in_file = self.cursor.get_y_position_in_file() as usize;
         let current_line = self.lines[y_position_in_file - 1].clone();
         let nb_char_in_current_line = current_line.len() as u16;
-        let end_of_line = &current_line[self.cursor.x as usize - 1..nb_char_in_current_line as usize];
-        self.lines.insert(y_position_in_file, String::from(end_of_line));
+        let end_of_line =
+            &current_line[self.cursor.x as usize - 1..nb_char_in_current_line as usize];
+        self.lines
+            .insert(y_position_in_file, String::from(end_of_line));
         let current_line = &mut self.lines[y_position_in_file - 1];
         current_line.truncate(self.cursor.x as usize - 1);
         if self.cursor.y == terminal_height - 1 {
             self.cursor.x = 1;
-            self.cursor.y_offset = self.cursor.y_offset + 1;
+            self.cursor.y_offset += 1;
         } else {
             self.cursor.x = 1;
-            self.cursor.y = self.cursor.y + 1;
+            self.cursor.y += 1;
         }
     }
 
     fn insert_char(&mut self, c: char) {
         let current_line = &mut self.lines[self.cursor.get_y_position_in_file() as usize - 1];
         current_line.insert(self.cursor.x as usize - 1, c);
-        self.cursor.x = self.cursor.x + 1;
+        self.cursor.x += 1;
     }
 
     pub fn remove(&mut self, terminal_height: u16) {
@@ -75,13 +77,14 @@ impl Editor {
         let previous_line = &mut self.lines[y_position_in_file - 2];
         previous_line.push_str(&current_line);
         self.lines.remove(y_position_in_file - 1);
-        if self.cursor.y_offset > 0 && self.lines.len() as u16 - self.cursor.y_offset < terminal_height {
-            self.cursor.y_offset = self.cursor.y_offset - 1;
+        if self.cursor.y_offset > 0
+            && self.lines.len() as u16 - self.cursor.y_offset < terminal_height
+        {
+            self.cursor.y_offset -= 1;
             self.cursor.y = cursor_before.y;
         }
     }
 }
-
 
 pub fn handle_key_press(
     key: Result<Key, Error>,
@@ -118,7 +121,7 @@ pub fn handle_key_press(
         }
         _ => (),
     }
-    return true;
+    true
 }
 
 #[cfg(test)]
@@ -134,7 +137,6 @@ mod tests {
         let file_name_option = Some(&file_name);
         let mut editor = Editor::from(vec![String::new()]);
 
-
         // When
         handle_key_press(key, &mut editor, file_name_option, terminal_height);
 
@@ -145,7 +147,6 @@ mod tests {
         assert_eq!(editor.lines[0], "t");
         assert_eq!(editor.lines[0], "t");
     }
-
 
     #[test]
     fn insert_char_should_insert_first_char() {
@@ -175,7 +176,6 @@ mod tests {
             cursor,
         };
 
-
         // When
         editor.insert('a', 36);
 
@@ -198,7 +198,6 @@ mod tests {
             lines: vec![String::from("this is a test")],
             cursor,
         };
-
 
         // When
         editor.insert('\n', 36);
@@ -223,7 +222,6 @@ mod tests {
             cursor,
         };
 
-
         // When
         editor.insert('\n', 36);
 
@@ -247,7 +245,6 @@ mod tests {
             cursor,
         };
 
-
         // When
         editor.remove(36);
 
@@ -267,10 +264,13 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is a test"), String::new(), String::from("this is a test2")],
+            lines: vec![
+                String::from("this is a test"),
+                String::new(),
+                String::from("this is a test2"),
+            ],
             cursor,
         };
-
 
         // When
         editor.remove(36);
@@ -291,16 +291,22 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is a test"), String::from("this is a test2"), String::from("this is a test3")],
+            lines: vec![
+                String::from("this is a test"),
+                String::from("this is a test2"),
+                String::from("this is a test3"),
+            ],
             cursor,
         };
-
 
         // When
         editor.remove(36);
 
         // Then
-        assert_eq!(editor.lines, vec!["this is a testthis is a test2", "this is a test3"]);
+        assert_eq!(
+            editor.lines,
+            vec!["this is a testthis is a test2", "this is a test3"]
+        );
         assert_eq!(editor.cursor.x, 15);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
@@ -315,10 +321,12 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is a test"), String::from("this is a test2")],
+            lines: vec![
+                String::from("this is a test"),
+                String::from("this is a test2"),
+            ],
             cursor,
         };
-
 
         // When
         editor.remove(36);
@@ -339,19 +347,28 @@ mod tests {
             y_offset: 1,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is a test"), String::from("this is a test2"),
-                        String::from("this is a test3"),
-                        String::from("this is a test4")],
+            lines: vec![
+                String::from("this is a test"),
+                String::from("this is a test2"),
+                String::from("this is a test3"),
+                String::from("this is a test4"),
+            ],
             cursor,
         };
-
 
         // When
         editor.remove(36);
 
         // Then
-        assert_eq!(editor.lines, vec!["this is a test", "this is a test2",
-                                      "this is a test3", "thi is a test4"]);
+        assert_eq!(
+            editor.lines,
+            vec![
+                "this is a test",
+                "this is a test2",
+                "this is a test3",
+                "thi is a test4"
+            ]
+        );
         assert_eq!(editor.cursor.x, 4);
         assert_eq!(editor.cursor.y, 3);
         assert_eq!(editor.cursor.y_offset, 1);
@@ -366,19 +383,28 @@ mod tests {
             y_offset: 1,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is a test"), String::from("this is a test2"),
-                        String::from("this is a test3"),
-                        String::from("this is a test4")],
+            lines: vec![
+                String::from("this is a test"),
+                String::from("this is a test2"),
+                String::from("this is a test3"),
+                String::from("this is a test4"),
+            ],
             cursor,
         };
-
 
         // When
         editor.remove(36);
 
         // Then
-        assert_eq!(editor.lines, vec!["this is a test", "thi is a test2",
-                                      "this is a test3", "this is a test4"]);
+        assert_eq!(
+            editor.lines,
+            vec![
+                "this is a test",
+                "thi is a test2",
+                "this is a test3",
+                "this is a test4"
+            ]
+        );
         assert_eq!(editor.cursor.x, 4);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 1);
@@ -393,19 +419,27 @@ mod tests {
             y_offset: 1,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is a test"), String::from("this is a test2"),
-                        String::from("this is a test3"),
-                        String::from("this is a test4")],
+            lines: vec![
+                String::from("this is a test"),
+                String::from("this is a test2"),
+                String::from("this is a test3"),
+                String::from("this is a test4"),
+            ],
             cursor,
         };
-
 
         // When
         editor.remove(5);
 
         // Then
-        assert_eq!(editor.lines, vec!["this is a testthis is a test2",
-                                      "this is a test3", "this is a test4"]);
+        assert_eq!(
+            editor.lines,
+            vec![
+                "this is a testthis is a test2",
+                "this is a test3",
+                "this is a test4"
+            ]
+        );
         assert_eq!(editor.cursor.x, 15);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
