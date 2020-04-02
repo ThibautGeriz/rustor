@@ -1,6 +1,5 @@
 extern crate termion;
 
-use std::cmp;
 use std::io::Write;
 
 use termion::{color, style};
@@ -51,13 +50,11 @@ pub fn get_number_of_chars_of_u16(num: u16) -> u16 {
 
 pub fn print_text<W: Write>(stream: &mut W, editor: &Editor) {
     let (terminal_width, terminal_height) = termion::terminal_size().unwrap();
-    let left_pad = get_number_of_chars_of_u16(editor.lines.len() as u16);
-    let max_line = cmp::min(
-        editor.lines.len(),
-        terminal_height as usize - 1 + editor.cursor.y_offset as usize,
-    );
+    let number_of_lines = editor.get_number_of_lines();
+    let left_pad = get_number_of_chars_of_u16(number_of_lines as u16);
     let white_line = (0..terminal_width).map(|_| ' ').collect::<String>();
-    for (index, l) in editor.lines[editor.cursor.y_offset as usize..max_line]
+    for (index, l) in editor
+        .get_editor_lines(terminal_height as usize - 1)
         .iter()
         .enumerate()
     {
@@ -74,11 +71,11 @@ pub fn print_text<W: Write>(stream: &mut W, editor: &Editor) {
         )
     }
 
-    if editor.lines.len() < terminal_height as usize - 1 {
+    if number_of_lines < terminal_height as usize - 1 {
         write!(
             stream,
             "{}{}{}",
-            termion::cursor::Goto(1, editor.lines.len() as u16 + 2),
+            termion::cursor::Goto(1, number_of_lines as u16 + 2),
             white_line,
             termion::cursor::Goto(left_pad + editor.cursor.x + 2, editor.cursor.y + 1),
         )

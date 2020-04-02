@@ -1,3 +1,4 @@
+use std::cmp;
 use std::io::Error;
 
 use termion::event::Key;
@@ -7,7 +8,7 @@ use file::*;
 
 #[derive(Debug)]
 pub struct Editor {
-    pub lines: Vec<String>,
+    lines: Vec<String>,
     pub cursor: CursorPosition,
 }
 
@@ -17,6 +18,24 @@ impl Editor {
             lines,
             cursor: CursorPosition::new(),
         }
+    }
+
+    pub fn get_editor_lines(&self, terminal_height: usize) -> &[String] {
+        let y_offset = (self.cursor.y_offset) as usize;
+        let number_of_lines = self.get_number_of_lines();
+        let max_line = cmp::min(
+            number_of_lines,
+            terminal_height as usize + y_offset as usize,
+        );
+        self.get_range_lines(y_offset, max_line)
+    }
+
+    fn get_range_lines(&self, start: usize, stop: usize) -> &[String] {
+        &self.lines[start..stop]
+    }
+
+    pub fn get_number_of_lines(&self) -> usize {
+        self.lines.len()
     }
 
     pub fn insert(&mut self, c: char, terminal_height: u16) {
@@ -146,6 +165,7 @@ mod tests {
         assert_eq!(editor.lines.len(), 1);
         assert_eq!(editor.lines[0], "t");
         assert_eq!(editor.lines[0], "t");
+        assert_eq!(editor.get_number_of_lines(), 1);
     }
 
     #[test]
@@ -207,6 +227,9 @@ mod tests {
         assert_eq!(editor.cursor.x, 1);
         assert_eq!(editor.cursor.y, 2);
         assert_eq!(editor.cursor.y_offset, 0);
+        assert_eq!(editor.get_number_of_lines(), 2);
+        assert_eq!(editor.get_editor_lines(20), &vec!["this is a test", ""][..]);
+        assert_eq!(editor.get_editor_lines(1), &vec!["this is a test"][..]);
     }
 
     #[test]
