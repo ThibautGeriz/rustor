@@ -10,6 +10,8 @@ This is a pet project to learn RUST, use at your own risk (they should be limite
 
 ```sh
 curl https://sh.rustup.rs -sSf | sh
+rustup component add clippy
+rustup component add rustfmt
 ```
 
 ## Commands
@@ -18,4 +20,6 @@ curl https://sh.rustup.rs -sSf | sh
 cargo build # compile
 cargo run # run the binary
 cargo test # run the tests
+cargo fmt # format the code
+cargo clippy # run the linter
 ```
