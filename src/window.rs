@@ -14,19 +14,38 @@ pub fn print_line<W: Write>(
     file_line_nb: u16,
     content: &str,
     cursor: &CursorPosition,
-) {
+    y_prev_line_offset: u16,
+) -> (u16, u16) {
+    let (terminal_width, _) = termion::terminal_size().unwrap();
     let line_nb_displayed = render_line_nb(left_pad, file_line_nb);
+    let (x_current_line, y_current_line) =
+        if content.len() + left_pad as usize > terminal_width as usize {
+            let rest = content.len() as u16 + left_pad - terminal_width;
+            (
+                cursor.y + y_prev_line_offset + rest / terminal_width + 1,
+                rest % terminal_width + 3,
+            )
+        } else {
+            (cursor.x + left_pad + 2, cursor.y + y_prev_line_offset)
+        };
+    // required to pad the rest of the line with whitespace
+    let whitespaces = (x_current_line - 1..terminal_width)
+        .map(|_| ' ')
+        .collect::<String>();
+
     write!(
         stream,
-        "{}{}{}.{} {}{}",
-        termion::cursor::Goto(1, terminal_line_nb + 1),
+        "{}{}{}.{} {}{}{}",
+        termion::cursor::Goto(1, terminal_line_nb + y_prev_line_offset),
         color::Fg(color::Blue),
         line_nb_displayed,
         style::Reset,
         content,
-        termion::cursor::Goto(left_pad + cursor.x + 2, cursor.y + 1),
+        whitespaces,
+        termion::cursor::Goto(x_current_line, y_current_line),
     )
     .unwrap();
+    (x_current_line, y_current_line)
 }
 
 pub fn print_first_line<W: Write>(stream: &mut W) {
@@ -49,35 +68,40 @@ pub fn get_number_of_chars_of_u16(num: u16) -> u16 {
 }
 
 pub fn print_text<W: Write>(stream: &mut W, editor: &Editor) {
-    let (terminal_width, terminal_height) = termion::terminal_size().unwrap();
     let number_of_lines = editor.get_number_of_lines();
+    let (terminal_width, terminal_height) = termion::terminal_size().unwrap();
     let left_pad = get_number_of_chars_of_u16(number_of_lines as u16);
-    let white_line = (0..terminal_width).map(|_| ' ').collect::<String>();
-    for (index, l) in editor
-        .get_editor_lines(terminal_height as usize - 1)
-        .iter()
-        .enumerate()
-    {
-        let mut line_content = l.clone();
-        line_content.push_str(&white_line);
-        line_content.truncate((terminal_width - left_pad - 2) as usize);
-        print_line(
+    let editor_lines = editor.get_editor_lines(terminal_height as usize - 1);
+    let mut y_line_offset = 1;
+    let mut x_current_line = 1;
+    let mut y_current_line = 1;
+    for (index, l) in editor_lines.iter().enumerate() {
+        let actual_position = print_line(
             stream,
             left_pad,
             index as u16 + 1,
             index as u16 + 1 + editor.cursor.y_offset,
-            &line_content,
+            &l,
             &editor.cursor,
-        )
-    }
+            y_line_offset,
+        );
+        x_current_line = actual_position.0;
+        y_current_line = actual_position.1;
 
-    if number_of_lines < terminal_height as usize - 1 {
+        if l.len() + left_pad as usize > terminal_width as usize {
+            y_line_offset += (l.len() as u16 + left_pad - terminal_width) / terminal_width + 1
+        }
+    }
+    let white_line = (0..terminal_width).map(|_| ' ').collect::<String>();
+
+    let number_of_lines = editor.get_number_of_lines();
+    if number_of_lines as u16 + y_line_offset < terminal_height - 1 {
         write!(
             stream,
             "{}{}{}",
-            termion::cursor::Goto(1, number_of_lines as u16 + 2),
+            termion::cursor::Goto(1, number_of_lines as u16 + y_line_offset + 1),
             white_line,
-            termion::cursor::Goto(left_pad + editor.cursor.x + 2, editor.cursor.y + 1),
+            termion::cursor::Goto(x_current_line, y_current_line),
         )
         .unwrap();
     }

@@ -38,6 +38,7 @@ fn main() {
         if !should_continue {
             break;
         }
+        print_first_line(&mut stdout);
         print_text(&mut stdout, &editor);
         stdout.flush().unwrap();
     }
