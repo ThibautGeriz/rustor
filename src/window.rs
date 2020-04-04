@@ -88,14 +88,7 @@ pub fn print_text<W: Write>(stream: &mut W, editor: &Editor) {
         x_current_line = actual_position.0;
         y_current_line = actual_position.1;
 
-        //        if l.len() + left_pad as usize > terminal_width as usize {
-        //            y_line_offset += (l.len() as u16 + left_pad - terminal_width) / terminal_width + 1
-        //        }
-        y_line_offset = get_number_of_lines_under_which_the_text_line_should_be_displayed(
-            &l,
-            left_pad,
-            terminal_width,
-        );
+        y_line_offset += get_y_offset_of_line(&l, left_pad, terminal_width);
     }
     let white_line = (0..terminal_width).map(|_| ' ').collect::<String>();
 
@@ -112,15 +105,11 @@ pub fn print_text<W: Write>(stream: &mut W, editor: &Editor) {
     }
 }
 
-fn get_number_of_lines_under_which_the_text_line_should_be_displayed(
-    line: &str,
-    left_pad: u16,
-    terminal_width: u16,
-) -> u16 {
+fn get_y_offset_of_line(line: &str, left_pad: u16, terminal_width: u16) -> u16 {
     if line.len() as u16 + left_pad < terminal_width {
-        return 1;
+        return 0;
     }
-    (line.len() as u16 + left_pad - terminal_width) / terminal_width + 2
+    (line.len() as u16 + left_pad - terminal_width) / terminal_width + 1
 }
 
 fn render_line_nb(left_pad: u16, line_nb: u16) -> String {
@@ -221,14 +210,10 @@ mod tests {
         let terminal_width = 30;
 
         // When
-        let result = get_number_of_lines_under_which_the_text_line_should_be_displayed(
-            &line,
-            left_pad,
-            terminal_width,
-        );
+        let result = get_y_offset_of_line(&line, left_pad, terminal_width);
 
         // Then
-        assert_eq!(result, 1);
+        assert_eq!(result, 0);
     }
 
     #[test]
@@ -239,14 +224,10 @@ mod tests {
         let terminal_width = 20;
 
         // When
-        let result = get_number_of_lines_under_which_the_text_line_should_be_displayed(
-            &line,
-            left_pad,
-            terminal_width,
-        );
+        let result = get_y_offset_of_line(&line, left_pad, terminal_width);
 
         // Then
-        assert_eq!(result, 2);
+        assert_eq!(result, 1);
     }
 
     #[test]
@@ -257,14 +238,10 @@ mod tests {
         let terminal_width = 20;
 
         // When
-        let result = get_number_of_lines_under_which_the_text_line_should_be_displayed(
-            &line,
-            left_pad,
-            terminal_width,
-        );
+        let result = get_y_offset_of_line(&line, left_pad, terminal_width);
 
         // Then
-        assert_eq!(result, 3);
+        assert_eq!(result, 2);
     }
 
     #[test]
@@ -275,13 +252,9 @@ mod tests {
         let terminal_width = 10;
 
         // When
-        let result = get_number_of_lines_under_which_the_text_line_should_be_displayed(
-            &line,
-            left_pad,
-            terminal_width,
-        );
+        let result = get_y_offset_of_line(&line, left_pad, terminal_width);
 
         // Then
-        assert_eq!(result, 2);
+        assert_eq!(result, 1);
     }
 }
