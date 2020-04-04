@@ -88,9 +88,14 @@ pub fn print_text<W: Write>(stream: &mut W, editor: &Editor) {
         x_current_line = actual_position.0;
         y_current_line = actual_position.1;
 
-        if l.len() + left_pad as usize > terminal_width as usize {
-            y_line_offset += (l.len() as u16 + left_pad - terminal_width) / terminal_width + 1
-        }
+        //        if l.len() + left_pad as usize > terminal_width as usize {
+        //            y_line_offset += (l.len() as u16 + left_pad - terminal_width) / terminal_width + 1
+        //        }
+        y_line_offset = get_number_of_lines_under_which_the_text_line_should_be_displayed(
+            &l,
+            left_pad,
+            terminal_width,
+        );
     }
     let white_line = (0..terminal_width).map(|_| ' ').collect::<String>();
 
@@ -105,6 +110,14 @@ pub fn print_text<W: Write>(stream: &mut W, editor: &Editor) {
         )
         .unwrap();
     }
+}
+
+fn get_number_of_lines_under_which_the_text_line_should_be_displayed(
+    line: &str,
+    _left_pad: u16,
+    terminal_width: u16,
+) -> u16 {
+    line.len() as u16 / terminal_width
 }
 
 fn render_line_nb(left_pad: u16, line_nb: u16) -> String {
@@ -195,5 +208,41 @@ mod tests {
 
         // Then
         assert_eq!(result, "   5");
+    }
+
+    //    #[test]
+    fn should_be_on_1_line_when_length_less_than_terminal_width() {
+        // Given
+        let line = String::from("this is a test");
+        let left_pad = 3;
+        let terminal_width = 30;
+
+        // When
+        let result = get_number_of_lines_under_which_the_text_line_should_be_displayed(
+            &line,
+            left_pad,
+            terminal_width,
+        );
+
+        // Then
+        assert_eq!(result, 1);
+    }
+
+    //    #[test]
+    fn should_be_on_2_lines_when_length_is_more_than_terminal_width() {
+        // Given
+        let line = String::from("this is a longer line test.");
+        let left_pad = 3;
+        let terminal_width = 20;
+
+        // When
+        let result = get_number_of_lines_under_which_the_text_line_should_be_displayed(
+            &line,
+            left_pad,
+            terminal_width,
+        );
+
+        // Then
+        assert_eq!(result, 2);
     }
 }
