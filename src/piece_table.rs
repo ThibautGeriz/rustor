@@ -1,4 +1,4 @@
-use piece_table::NodeType::ORIGINAL;
+use piece_table::NodeType::{ADDED, ORIGINAL};
 
 #[derive(Debug)]
 pub struct PieceTable {
@@ -35,15 +35,41 @@ impl PieceTable {
         }
     }
 
-    fn get_text(&self) -> &String {
+    fn get_text(&mut self) -> String {
         let mut text = self.original.clone();
         text.push_str(&self.added);
-        return &text;
+        return text;
     }
 
     fn push(&mut self, text: String) {
-        self.added = text;
+        self.added.push_str(&text);
+        let new_node = Node {
+            node_type: ADDED,
+            start: self.added.len() as u32,
+            length: text.len(),
+        };
+        self.nodes.push(new_node);
     }
+
+//    fn insert(&mut self, index: u32, text: String) {
+//        self.added.push_str(&text);
+//        let new_node = Node {
+//            node_type: ADDED,
+//            start: self.added.len() as u32,
+//            length: text.len()
+//        };
+//        let before_insertion_node = Node {
+//            node_type: ORIGINAL,
+//            start: 0,
+//            length: (index + 1) as usize
+//        };
+//        let after_insertion_node = Node {
+//            node_type: ADDED,
+//            start: 0,
+//            length: (index + 1) as usize
+//        };
+//        self.nodes.push(new_node);
+//    }
 }
 
 #[cfg(test)]
@@ -56,18 +82,18 @@ mod tests {
         let input = String::from("This is a text");
 
         // When
-        let piece_table = PieceTable::new(input);
+        let mut piece_table = PieceTable::new(input);
 
         // Then
         let text = piece_table.get_text();
-        assert_eq!(text, &String::from("This is a text"))
+        assert_eq!(text, String::from("This is a text"))
     }
 
     #[test]
     fn push_should_add_text_at_end_of_line() {
         // Given
         let input = String::from("This is a text");
-        let piece_table = PieceTable::new(input);
+        let mut piece_table = PieceTable::new(input);
         let push_str = String::from(".");
 
         // When
@@ -75,6 +101,38 @@ mod tests {
 
         // Then
         let text = piece_table.get_text();
-        assert_eq!(text, &String::from("This is a text."))
+        assert_eq!(text, String::from("This is a text."))
     }
+
+    #[test]
+    fn push_should_add_text_at_end_of_line_2() {
+        // Given
+        let input = String::from("This is a text");
+        let mut piece_table = PieceTable::new(input);
+        let push_str = String::from(".");
+        let push_str2 = String::from("..");
+
+        // When
+        piece_table.push(push_str);
+        piece_table.push(push_str2);
+
+        // Then
+        let text = piece_table.get_text();
+        assert_eq!(text, String::from("This is a text..."))
+    }
+
+//    #[test]
+//    fn insert_should_add_text_in_the_content() {
+//        // Given
+//        let input = String::from("This is a text");
+//        let mut piece_table = PieceTable::new(input);
+//        let push_str = String::from("new ");
+//
+//        // When
+//        piece_table.insert(10, push_str);
+//
+//        // Then
+//        let text = piece_table.get_text();
+//        assert_eq!(text, String::from("This is a new text"))
+//    }
 }
