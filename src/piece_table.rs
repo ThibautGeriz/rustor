@@ -7,14 +7,14 @@ pub struct PieceTable {
     nodes: Vec<Node>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Node {
     node_type: NodeType,
     start: u32,
     length: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum NodeType {
     ORIGINAL,
     ADDED,
@@ -61,12 +61,22 @@ impl PieceTable {
     }
 
     fn remove(&mut self, start_index: u32, length: usize) {
-        let new_node = Node {
-            node_type: ADDED,
-            start: start_index + 1,
-            length: 2,
-        };
-        self.nodes.push(new_node);
+        let remove_start_index = start_index as usize;
+        let remove_stop_index = remove_start_index + length;
+        println!("{:?}", &self.nodes.iter())
+        // self.nodes = &self
+        //     .nodes
+        //     .into_iter()
+        //     .map(|node| {
+        //         let node_start_index = node.start as usize;
+        //         let node_stop_index = node_start_index + node.length;
+        //         if remove_start_index > node_stop_index || remove_stop_index < node_stop_index {
+        //             return node;
+        //         } else {
+        //             return node;
+        //         }
+        //     })
+        //     .collect::<Vec<Node>>()
     }
 
     //    fn insert(&mut self, index: u32, text: String) {
