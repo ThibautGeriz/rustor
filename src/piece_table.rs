@@ -78,12 +78,14 @@ impl PieceTable {
     fn remove(mut self, start_index: u32, length: usize) -> PieceTable {
         let remove_start_index = start_index as usize;
         let remove_stop_index = remove_start_index + length;
+        let mut text_index = 0 as usize;
         self.nodes = self
             .nodes
             .into_iter()
             .flat_map(|node| {
-                let node_start_index = node.start as usize;
-                let node_stop_index = node_start_index + node.length;
+                let node_start_index = text_index;
+                let node_stop_index = text_index + node.length;
+                text_index += node.length;
                 if node_start_index < remove_start_index && node_stop_index > remove_stop_index {
                     let start_diff = remove_stop_index - node_start_index;
                     return vec![
@@ -293,6 +295,22 @@ mod tests {
         // Then
         let text = piece_table.get_text();
         assert_eq!(text, String::from("This is a text."));
+    }
+
+    #[test]
+    fn remove_when_index_is_between_two_piece() {
+        // Given
+        let input = String::from("This is a text.xx");
+        let mut piece_table = PieceTable::new(input);
+        let input2 = String::from("xx This is a text.");
+        piece_table = piece_table.push(input2);
+
+        // When
+        piece_table = piece_table.remove(15, 4);
+
+        // Then
+        let text = piece_table.get_text();
+        assert_eq!(text, String::from("This is a text. This is a text."));
     }
 
     #[test]
