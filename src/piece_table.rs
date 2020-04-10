@@ -133,7 +133,7 @@ impl PieceTable {
         }
 
         let add_start_index = self.added.len();
-        &self.added.push_str(&text);
+        self.added.push_str(&text);
 
         let (node_where_it_got_inserted, index_node_where_it_got_inserted) =
             self.get_node_where_it_got_inserted_and_index(index);
@@ -161,7 +161,7 @@ impl PieceTable {
 
         let new_nodes = vec![node_before_insertion, new_node, node_after_insertion];
 
-        &self.nodes.splice(
+        self.nodes.splice(
             index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
             new_nodes.into_iter(),
         );
@@ -171,24 +171,22 @@ impl PieceTable {
         let mut total_offset = 0;
         let mut index_node_where_it_got_inserted = 0;
 
-        let mut node_where_it_got_inserted = self
-            .nodes.get(0).unwrap();
+        let mut node_where_it_got_inserted = self.nodes.get(0).unwrap();
 
-        self
-            .nodes
-            .clone()
-            .into_iter()
-            .for_each(|node| {
-                total_offset += node.length;
-                if total_offset as u32 > index {
-                    node_where_it_got_inserted = self
-                        .nodes.get(index_node_where_it_got_inserted).unwrap();
-                    return;
-                }
-                index_node_where_it_got_inserted += 1;
-            });
+        self.nodes.clone().into_iter().for_each(|node| {
+            total_offset += node.length;
+            if total_offset as u32 > index {
+                node_where_it_got_inserted =
+                    self.nodes.get(index_node_where_it_got_inserted).unwrap();
+                return;
+            }
+            index_node_where_it_got_inserted += 1;
+        });
 
-        return (*node_where_it_got_inserted, index_node_where_it_got_inserted);
+        return (
+            *node_where_it_got_inserted,
+            index_node_where_it_got_inserted,
+        );
     }
 }
 
