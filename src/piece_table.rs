@@ -22,7 +22,9 @@ enum NodeType {
 
 impl PartialEq<Node> for Node {
     fn eq(&self, other: &Node) -> bool {
-        self.node_type == other.node_type && self.start == other.start && self.length == other.length
+        self.node_type == other.node_type
+            && self.start == other.start
+            && self.length == other.length
     }
 }
 
@@ -131,11 +133,10 @@ impl PieceTable {
         let add_start_index = &self.added.len() - 1;
         &self.added.push_str(&text);
 
-        let (node_where_it_got_inserted, index_node_where_it_got_inserted) = self
-            .get_node_where_it_got_inserted_and_index(index);
+        let (node_where_it_got_inserted, index_node_where_it_got_inserted) =
+            self.get_node_where_it_got_inserted_and_index(index);
 
         let length_before_insertion_node = index - node_where_it_got_inserted.start;
-
 
         let node_before_insertion = Node {
             node_type: node_where_it_got_inserted.node_type,
@@ -147,7 +148,8 @@ impl PieceTable {
             length: text.len(),
             start: add_start_index as u32,
         };
-        let length_after_insertion = node_where_it_got_inserted.length - node_before_insertion.length;
+        let length_after_insertion =
+            node_where_it_got_inserted.length - node_before_insertion.length;
 
         let node_after_insertion = Node {
             node_type: node_where_it_got_inserted.node_type,
@@ -157,9 +159,10 @@ impl PieceTable {
 
         let new_nodes = vec![node_before_insertion, new_node, node_after_insertion];
 
-        &self
-            .nodes
-            .splice(index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1, new_nodes.into_iter());
+        &self.nodes.splice(
+            index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
+            new_nodes.into_iter(),
+        );
     }
 
     fn get_node_where_it_got_inserted_and_index(&mut self, index: u32) -> (Node, usize) {
