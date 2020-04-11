@@ -166,22 +166,27 @@ impl PieceTable {
     }
 
     fn get_node_where_it_got_inserted_and_index(&mut self, index: u32) -> (Node, usize) {
-        println!("{:?}", self.nodes);
-        let node_where_it_got_inserted = self
+        let mut total_offset = 0;
+        let mut index_node_where_it_got_inserted = 0;
+
+        let mut node_where_it_got_inserted = self
+            .nodes.get(0).unwrap();
+
+        self
             .nodes
             .clone()
             .into_iter()
-            .find(|node| node.start + node.length as u32 > index)
-            .unwrap()
-            .clone();
+            .for_each(|node| {
+                total_offset += node.length;
+                if total_offset as u32 > index {
+                    node_where_it_got_inserted = self
+                        .nodes.get(index_node_where_it_got_inserted).unwrap();
+                    return;
+                }
+                index_node_where_it_got_inserted += 1;
+            });
 
-        let index_node_where_it_got_inserted = self
-            .nodes
-            .iter()
-            .position(|node| node == &node_where_it_got_inserted)
-            .unwrap();
-
-        return (node_where_it_got_inserted, index_node_where_it_got_inserted);
+        return (*node_where_it_got_inserted, index_node_where_it_got_inserted);
     }
 }
 
@@ -303,14 +308,13 @@ mod tests {
         // When
         piece_table.insert(10, added_str);
 
-        println!("{:?}", piece_table);
         // Then
         let text = piece_table.get_text();
         assert_eq!(text, String::from("This is a new text..."))
     }
 
     #[test]
-    fn insert_should_insert_text_in_the_content_node_node() {
+    fn insert_should_insert_text_in_the_content_of_second_node() {
         // Given
         let input = String::from("This is a text.");
         let pushed_input = String::from(" This is a second piece.");
@@ -340,16 +344,35 @@ mod tests {
         let mut piece_table = PieceTable::new(input);
         piece_table = piece_table.push(push_str);
         piece_table = piece_table.push(push_str2);
-        let expected_node = &piece_table.nodes.get(0).unwrap().clone();
+
+        let expected_node = piece_table.nodes.get(0).unwrap().clone();
 
         // WHEN
         let (result, result_index) = piece_table.get_node_where_it_got_inserted_and_index(5);
 
-        println!("{:?}", piece_table);
-        println!("{:?}", result);
         //THEN
         assert_eq!(0, result_index);
-        assert_eq!(expected_node, &result);
+        assert_eq!(expected_node, result);
+    }
+
+    #[test]
+    fn should_find_node_where_it_got_inserted_and_its_index_even_on_ADDED_nodes() {
+        // GIVEN
+        let input = String::from("This is a text");
+        let push_str = String::from(". And this is another sentence");
+        let push_str2 = String::from("...");
+        let mut piece_table = PieceTable::new(input);
+        piece_table = piece_table.push(push_str);
+        piece_table = piece_table.push(push_str2);
+
+        let expected_node = piece_table.nodes.get(1).unwrap().clone();
+
+        // WHEN
+        let (result, result_index) = piece_table.get_node_where_it_got_inserted_and_index(20);
+
+        //THEN
+        assert_eq!(1, result_index);
+        assert_eq!(expected_node, result);
     }
 
     #[test]
