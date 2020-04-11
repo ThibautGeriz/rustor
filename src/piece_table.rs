@@ -85,39 +85,57 @@ impl PieceTable {
             .flat_map(|node| {
                 let node_start_index = text_index;
                 let node_stop_index = text_index + node.length;
+                let current_text_index = text_index;
                 text_index += node.length;
-                if node_start_index < remove_start_index && node_stop_index > remove_stop_index {
-                    let start_diff = remove_stop_index - node_start_index;
+                if PieceTable::is_deletion_within_the_piece(
+                    node_start_index,
+                    node_stop_index,
+                    remove_start_index,
+                    remove_stop_index,
+                ) {
+                    let second_node_start = (remove_stop_index - current_text_index) as u32;
                     return vec![
                         Node {
                             node_type: node.node_type,
-                            start: node_start_index as u32,
-                            length: node.length - start_diff - 1, // not sure about this - 1
+                            start: node.start,
+                            length: remove_start_index - node_start_index,
                         },
                         Node {
                             node_type: node.node_type,
-                            start: remove_stop_index as u32,
-                            length: node.length - node_stop_index + remove_start_index + 1, // not sure about this + 1
+                            start: second_node_start,
+                            length: node.length
+                                - (second_node_start as usize - node.start as usize),
                         },
                     ];
-                } else if node_start_index >= remove_start_index
-                    && node_stop_index <= remove_stop_index
-                {
+                } else if PieceTable::is_piece_within_deletion(
+                    node_start_index,
+                    node_stop_index,
+                    remove_start_index,
+                    remove_stop_index,
+                ) {
                     return vec![];
-                } else if node_start_index < remove_stop_index
-                    && remove_start_index <= node_start_index
-                {
+                } else if PieceTable::is_deletion_at_the_beginning_of_piece(
+                    node_start_index,
+                    node_stop_index,
+                    remove_start_index,
+                    remove_stop_index,
+                ) {
                     let start_diff = remove_stop_index - node_start_index;
                     return vec![Node {
                         node_type: node.node_type,
                         start: node.start + start_diff as u32,
                         length: node.length - start_diff,
                     }];
-                } else if node_stop_index > remove_start_index {
+                } else if PieceTable::is_deletion_at_the_end_of_piece(
+                    node_start_index,
+                    node_stop_index,
+                    remove_start_index,
+                    remove_stop_index,
+                ) {
                     return vec![Node {
                         node_type: node.node_type,
                         start: node.start,
-                        length: node.length - node_stop_index + remove_start_index,
+                        length: node.length + remove_start_index - node_stop_index,
                     }];
                 } else {
                     return vec![node];
@@ -125,6 +143,42 @@ impl PieceTable {
             })
             .collect();
         self
+    }
+
+    fn is_deletion_within_the_piece(
+        node_start_index: usize,
+        node_stop_index: usize,
+        remove_start_index: usize,
+        remove_stop_index: usize,
+    ) -> bool {
+        node_start_index < remove_start_index && node_stop_index > remove_stop_index
+    }
+
+    fn is_piece_within_deletion(
+        node_start_index: usize,
+        node_stop_index: usize,
+        remove_start_index: usize,
+        remove_stop_index: usize,
+    ) -> bool {
+        node_start_index >= remove_start_index && node_stop_index <= remove_stop_index
+    }
+
+    fn is_deletion_at_the_beginning_of_piece(
+        node_start_index: usize,
+        node_stop_index: usize,
+        remove_start_index: usize,
+        remove_stop_index: usize,
+    ) -> bool {
+        node_start_index < remove_stop_index && remove_start_index <= node_start_index
+    }
+
+    fn is_deletion_at_the_end_of_piece(
+        node_start_index: usize,
+        node_stop_index: usize,
+        remove_start_index: usize,
+        remove_stop_index: usize,
+    ) -> bool {
+        node_stop_index > remove_start_index && remove_start_index >= node_start_index
     }
 
     fn insert(&mut self, index: u32, text: String) {
@@ -167,13 +221,13 @@ impl PieceTable {
         );
     }
 
-    fn get_node_where_it_got_inserted_and_index(&mut self, index: u32) -> (Node, usize) {
+    fn get_node_where_it_got_inserted_and_index(&self, index: u32) -> (Node, usize) {
         let mut total_offset = 0;
         let mut index_node_where_it_got_inserted = 0;
 
         let mut node_where_it_got_inserted = self.nodes.get(0).unwrap();
 
-        self.nodes.clone().into_iter().for_each(|node| {
+        self.nodes.iter().for_each(|node| {
             total_offset += node.length;
             if total_offset as u32 > index {
                 node_where_it_got_inserted =
@@ -296,19 +350,40 @@ mod tests {
     }
 
     #[test]
-    fn remove_when_index_is_between_two_piece() {
+    fn remove_when_index_is_length_of_text_should_remove_characters_within_of_second_piece() {
         // Given
-        let input = String::from("This is a text.xx");
+        let input = String::from("This is a text.");
         let mut piece_table = PieceTable::new(input);
-        let input2 = String::from("xx This is a text.");
-        piece_table = piece_table.push(input2);
+        let input1 = String::from(" This is a xxtext.");
+        piece_table = piece_table.push(input1);
 
         // When
-        piece_table = piece_table.remove(15, 4);
+        piece_table = piece_table.remove(26, 2);
 
         // Then
         let text = piece_table.get_text();
         assert_eq!(text, String::from("This is a text. This is a text."));
+    }
+
+    #[test]
+    fn remove_when_index_is_between_two_pieces() {
+        // Given
+        let input = String::from("This is a text.");
+        let mut piece_table = PieceTable::new(input);
+        let input1 = String::from(" This is a text.xx");
+        piece_table = piece_table.push(input1);
+        let input2 = String::from("xx This is a text.");
+        piece_table = piece_table.push(input2);
+
+        // When
+        piece_table = piece_table.remove(31, 4);
+
+        // Then
+        let text = piece_table.get_text();
+        assert_eq!(
+            text,
+            String::from("This is a text. This is a text. This is a text.")
+        );
     }
 
     #[test]
@@ -342,7 +417,6 @@ mod tests {
         // When
         piece_table.insert(26, added_str);
 
-        println!("{:?}", piece_table);
         // Then
         let text = piece_table.get_text();
         assert_eq!(
@@ -353,7 +427,7 @@ mod tests {
 
     #[test]
     fn should_find_node_where_it_got_inserted_and_its_index() {
-        // GIVEN
+        // Given
         let input = String::from("This is a text");
         let push_str = String::from(".");
         let push_str2 = String::from("..");
@@ -363,17 +437,17 @@ mod tests {
 
         let expected_node = piece_table.nodes.get(0).unwrap().clone();
 
-        // WHEN
+        // When
         let (result, result_index) = piece_table.get_node_where_it_got_inserted_and_index(5);
 
-        //THEN
+        // Then
         assert_eq!(0, result_index);
         assert_eq!(expected_node, result);
     }
 
     #[test]
     fn should_find_node_where_it_got_inserted_and_its_index_even_on_ADDED_nodes() {
-        // GIVEN
+        // Given
         let input = String::from("This is a text");
         let push_str = String::from(". And this is another sentence");
         let push_str2 = String::from("...");
@@ -383,10 +457,10 @@ mod tests {
 
         let expected_node = piece_table.nodes.get(1).unwrap().clone();
 
-        // WHEN
+        // When
         let (result, result_index) = piece_table.get_node_where_it_got_inserted_and_index(20);
 
-        //THEN
+        // Then
         assert_eq!(1, result_index);
         assert_eq!(expected_node, result);
     }
