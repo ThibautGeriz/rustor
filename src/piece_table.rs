@@ -214,11 +214,11 @@ impl PieceTable {
         let add_start_index = self.added.len();
         self.added.push_str(&text);
 
-        let (node_where_it_got_inserted, index_node_where_it_got_inserted) =
+        let (node_where_it_got_inserted, index_node_where_it_got_inserted, text_index) =
             self.get_node_where_it_got_inserted_and_index(index);
 
         let new_nodes =
-            self.build_new_nodes(index, text, add_start_index, node_where_it_got_inserted);
+            self.build_new_nodes(index, text, add_start_index, node_where_it_got_inserted, text_index);
 
         self.nodes.splice(
             index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
@@ -233,12 +233,15 @@ impl PieceTable {
         text: String,
         added_length: usize,
         node_where_it_got_inserted: Node,
+        text_index: usize
     ) -> Vec<Node> {
-        let length_before_insertion_node = if node_where_it_got_inserted.node_type == ORIGINAL {
-            index
-        } else {
-            index - node_where_it_got_inserted.start - self.original.len() as u32
-        };
+        //remove_start_index - node_start_index
+        let length_before_insertion_node = index - text_index as u32;
+//            if node_where_it_got_inserted.node_type == ORIGINAL {
+//            index
+//        } else {
+//            index - node_where_it_got_inserted.start - self.original.len() as u32
+//        };
 
         let node_before_insertion = Node {
             node_type: node_where_it_got_inserted.node_type,
@@ -260,7 +263,7 @@ impl PieceTable {
         vec![node_before_insertion, new_node, node_after_insertion]
     }
 
-    fn get_node_where_it_got_inserted_and_index(&self, index: u32) -> (Node, usize) {
+    fn get_node_where_it_got_inserted_and_index(&self, index: u32) -> (Node, usize, usize) {
         let mut total_offset = 0;
         let mut index_node_where_it_got_inserted = 0;
 
@@ -271,6 +274,7 @@ impl PieceTable {
             if total_offset as u32 > index {
                 node_where_it_got_inserted =
                     self.nodes.get(index_node_where_it_got_inserted).unwrap();
+                total_offset -= node.length;
                 return;
             }
             index_node_where_it_got_inserted += 1;
@@ -279,6 +283,7 @@ impl PieceTable {
         (
             *node_where_it_got_inserted,
             index_node_where_it_got_inserted,
+            total_offset
         )
     }
 }
@@ -571,11 +576,12 @@ mod tests {
         let expected_node = piece_table.nodes.get(0).unwrap().clone();
 
         // When
-        let (result, result_index) = piece_table.get_node_where_it_got_inserted_and_index(5);
+        let (result, result_index, text_index) = piece_table.get_node_where_it_got_inserted_and_index(5);
 
         // Then
         assert_eq!(0, result_index);
         assert_eq!(expected_node, result);
+        assert_eq!(0, text_index);
     }
 
     #[test]
@@ -591,11 +597,12 @@ mod tests {
         let expected_node = piece_table.nodes.get(1).unwrap().clone();
 
         // When
-        let (result, result_index) = piece_table.get_node_where_it_got_inserted_and_index(20);
+        let (result, result_index, text_index) = piece_table.get_node_where_it_got_inserted_and_index(20);
 
         // Then
         assert_eq!(1, result_index);
         assert_eq!(expected_node, result);
+        assert_eq!(14, text_index);
     }
 
     #[test]
