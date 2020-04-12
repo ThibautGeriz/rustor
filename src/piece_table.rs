@@ -75,6 +75,12 @@ impl PieceTable {
         self
     }
 
+    /*
+     *
+     * DELETE
+     *
+    */
+
     pub fn remove(mut self, start_index: u32, length: usize) -> PieceTable {
         let remove_start_index = start_index as usize;
         let remove_stop_index = remove_start_index + length;
@@ -181,6 +187,12 @@ impl PieceTable {
         node_stop_index > remove_start_index && remove_start_index >= node_start_index
     }
 
+    /*
+     *
+     * INSERTION
+     *
+    */
+
     pub fn insert(mut self, index: u32, text: String) -> PieceTable {
         let add_start_index = self.added.len();
         self.added.push_str(&text);
@@ -249,10 +261,10 @@ impl PieceTable {
             index_node_where_it_got_inserted += 1;
         });
 
-        return (
+        (
             *node_where_it_got_inserted,
             index_node_where_it_got_inserted,
-        );
+        )
     }
 }
 
