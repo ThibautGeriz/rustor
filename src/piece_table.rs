@@ -504,7 +504,7 @@ mod tests {
 
         // Then
         let text = final_result.get_text();
-        assert_eq!(text, String::from("This is a new text for unit tests..."))
+        assert_eq!(text, String::from("This is a text for unit tests..."))
     }
 
     #[test]
