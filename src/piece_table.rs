@@ -65,13 +65,28 @@ impl PieceTable {
     }
 
     pub fn push(mut self, text: String) -> PieceTable {
-        let new_node = Node {
-            node_type: ADDED,
-            start: self.added.len() as u32,
-            length: text.len(),
-        };
-        self.nodes.push(new_node);
-        self.added.push_str(&text);
+        let previous_node = self.nodes.iter().last().unwrap();
+        if previous_node.node_type == ADDED
+            && previous_node.start as usize + previous_node.length == self.added.len()
+        {
+            self.added.push_str(&text);
+            let new_node = Node {
+                node_type: ADDED,
+                start: previous_node.start,
+                length: previous_node.length + text.len(),
+            };
+            self.nodes
+                .splice(self.added.len() - 1..self.added.len(), vec![node].iter());
+        } else {
+            let new_node = Node {
+                node_type: ADDED,
+                start: self.added.len() as u32,
+                length: text.len(),
+            };
+            self.nodes.push(new_node);
+            self.added.push_str(&text);
+        }
+
         self
     }
 
@@ -93,7 +108,7 @@ impl PieceTable {
                 let node_stop_index = text_index + node.length;
                 let current_text_index = text_index;
                 text_index += node.length;
-                if PieceTable::is_deletion_within_the_piece(
+                if PieceTable::is_deletion_within_the_node(
                     node_start_index,
                     node_stop_index,
                     remove_start_index,
@@ -113,14 +128,14 @@ impl PieceTable {
                                 - (second_node_start as usize - node.start as usize),
                         },
                     ];
-                } else if PieceTable::is_piece_within_deletion(
+                } else if PieceTable::is_node_within_deletion(
                     node_start_index,
                     node_stop_index,
                     remove_start_index,
                     remove_stop_index,
                 ) {
                     return vec![];
-                } else if PieceTable::is_deletion_at_the_beginning_of_piece(
+                } else if PieceTable::is_deletion_at_the_beginning_of_node(
                     node_start_index,
                     node_stop_index,
                     remove_start_index,
@@ -132,7 +147,7 @@ impl PieceTable {
                         start: node.start + start_diff as u32,
                         length: node.length - start_diff,
                     }];
-                } else if PieceTable::is_deletion_at_the_end_of_piece(
+                } else if PieceTable::is_deletion_at_the_end_of_node(
                     node_start_index,
                     node_stop_index,
                     remove_start_index,
@@ -151,7 +166,7 @@ impl PieceTable {
         self
     }
 
-    fn is_deletion_within_the_piece(
+    fn is_deletion_within_the_node(
         node_start_index: usize,
         node_stop_index: usize,
         remove_start_index: usize,
@@ -160,7 +175,7 @@ impl PieceTable {
         node_start_index < remove_start_index && node_stop_index > remove_stop_index
     }
 
-    fn is_piece_within_deletion(
+    fn is_node_within_deletion(
         node_start_index: usize,
         node_stop_index: usize,
         remove_start_index: usize,
@@ -169,7 +184,7 @@ impl PieceTable {
         node_start_index >= remove_start_index && node_stop_index <= remove_stop_index
     }
 
-    fn is_deletion_at_the_beginning_of_piece(
+    fn is_deletion_at_the_beginning_of_node(
         node_start_index: usize,
         node_stop_index: usize,
         remove_start_index: usize,
@@ -178,7 +193,7 @@ impl PieceTable {
         node_start_index < remove_stop_index && remove_start_index <= node_start_index
     }
 
-    fn is_deletion_at_the_end_of_piece(
+    fn is_deletion_at_the_end_of_node(
         node_start_index: usize,
         node_stop_index: usize,
         remove_start_index: usize,
@@ -312,11 +327,26 @@ mod tests {
 
         // Then
         let text = piece_table.get_text();
-        assert_eq!(text, String::from("This is a text..."))
+        assert_eq!(text, String::from("This is a text..."));
+        assert_eq!(
+            vec![
+                Node {
+                    node_type: ORIGINAL,
+                    start: 0,
+                    length: 15,
+                },
+                Node {
+                    node_type: ADDED,
+                    start: 0,
+                    length: 3,
+                }
+            ],
+            piece_table.nodes
+        );
     }
 
     #[test]
-    fn remove_when_index_is_length_of_text_should_remove_characters_at_the_end_of_piece() {
+    fn remove_when_index_is_length_of_text_should_remove_characters_at_the_end_of_node() {
         // Given
         let input = String::from("This is a text...");
         let mut piece_table = PieceTable::new(input);
@@ -330,7 +360,7 @@ mod tests {
     }
 
     #[test]
-    fn remove_when_index_is_length_of_text_should_remove_characters_at_the_beginning_of_piece() {
+    fn remove_when_index_is_length_of_text_should_remove_characters_at_the_beginning_of_node() {
         // Given
         let input = String::from("xxThis is a text.");
         let mut piece_table = PieceTable::new(input);
@@ -344,7 +374,7 @@ mod tests {
     }
 
     #[test]
-    fn remove_when_index_is_length_of_text_should_remove_characters_all_of_piece() {
+    fn remove_when_index_is_length_of_text_should_remove_characters_all_of_node() {
         // Given
         let input = String::from("This is a text.");
         let mut piece_table = PieceTable::new(input);
@@ -358,7 +388,7 @@ mod tests {
     }
 
     #[test]
-    fn remove_when_index_is_length_of_text_should_remove_characters_within_of_piece() {
+    fn remove_when_index_is_length_of_text_should_remove_characters_within_of_node() {
         // Given
         let input = String::from("This isxxxx a text.");
         let mut piece_table = PieceTable::new(input);
@@ -372,7 +402,7 @@ mod tests {
     }
 
     #[test]
-    fn remove_when_index_is_length_of_text_should_remove_characters_within_of_second_piece() {
+    fn remove_when_index_is_length_of_text_should_remove_characters_within_of_second_node() {
         // Given
         let input = String::from("This is a text.");
         let mut piece_table = PieceTable::new(input);
@@ -388,7 +418,7 @@ mod tests {
     }
 
     #[test]
-    fn remove_when_index_is_between_two_pieces() {
+    fn remove_when_index_is_between_two_nodes() {
         // Given
         let input = String::from("This is a text.");
         let mut piece_table = PieceTable::new(input);
@@ -471,7 +501,7 @@ mod tests {
 
         // When
         let mut pre_result = piece_table.insert(26, added_str);
-        let mut pre_result_1 = pre_result.insert(10, added_str_2);
+        let pre_result_1 = pre_result.insert(10, added_str_2);
         let final_result = pre_result_1.insert(9, added_str_3);
 
         // Then
@@ -523,7 +553,7 @@ mod tests {
     }
 
     #[test]
-    fn should_be_able_to_compare_two_piece_tables() {
+    fn should_be_able_to_compare_two_node_tables() {
         // Given
         let x = PieceTable::new(String::from("test"));
         let y = PieceTable::new(String::from("test"));
