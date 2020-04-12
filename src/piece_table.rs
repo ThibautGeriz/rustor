@@ -199,7 +199,7 @@ impl PieceTable {
     }
 
     fn build_new_nodes(
-        mut self,
+        &self,
         index: u32,
         text: String,
         add_start_index: usize,
