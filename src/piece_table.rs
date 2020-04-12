@@ -79,7 +79,7 @@ impl PieceTable {
      *
      * DELETE
      *
-    */
+     */
 
     pub fn remove(mut self, start_index: u32, length: usize) -> PieceTable {
         let remove_start_index = start_index as usize;
@@ -191,7 +191,7 @@ impl PieceTable {
      *
      * INSERTION
      *
-    */
+     */
 
     pub fn insert(mut self, index: u32, text: String) -> PieceTable {
         let add_start_index = self.added.len();
@@ -214,16 +214,15 @@ impl PieceTable {
         &self,
         index: u32,
         text: String,
-        add_start_index: usize,
+        added_length: usize,
         node_where_it_got_inserted: Node,
     ) -> Vec<Node> {
-        let length_before_insertion_node;
-        if node_where_it_got_inserted.node_type == ORIGINAL {
-            length_before_insertion_node = index;
+        let length_before_insertion_node = if node_where_it_got_inserted.node_type == ORIGINAL {
+            index
         } else {
-            length_before_insertion_node =
-                index - node_where_it_got_inserted.start - self.original.len() as u32;
+            index - node_where_it_got_inserted.start - self.original.len() as u32
         };
+
         let node_before_insertion = Node {
             node_type: node_where_it_got_inserted.node_type,
             length: length_before_insertion_node as usize,
@@ -232,7 +231,7 @@ impl PieceTable {
         let new_node = Node {
             node_type: ADDED,
             length: text.len(),
-            start: add_start_index as u32,
+            start: added_length as u32,
         };
         let length_after_insertion =
             node_where_it_got_inserted.length - node_before_insertion.length;
@@ -241,8 +240,7 @@ impl PieceTable {
             length: length_after_insertion,
             start: node_before_insertion.start + node_before_insertion.length as u32,
         };
-        let new_nodes = vec![node_before_insertion, new_node, node_after_insertion];
-        new_nodes
+        vec![node_before_insertion, new_node, node_after_insertion]
     }
 
     fn get_node_where_it_got_inserted_and_index(&self, index: u32) -> (Node, usize) {
@@ -251,7 +249,7 @@ impl PieceTable {
 
         let mut node_where_it_got_inserted = self.nodes.get(0).unwrap();
 
-        self.nodes.clone().into_iter().for_each(|node| {
+        self.nodes.iter().for_each(|node| {
             total_offset += node.length;
             if total_offset as u32 > index {
                 node_where_it_got_inserted =
