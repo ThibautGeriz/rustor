@@ -188,6 +188,23 @@ impl PieceTable {
         let (node_where_it_got_inserted, index_node_where_it_got_inserted) =
             self.get_node_where_it_got_inserted_and_index(index);
 
+        let new_nodes =
+            self.build_new_nodes(index, text, add_start_index, node_where_it_got_inserted);
+
+        self.nodes.splice(
+            index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
+            new_nodes.into_iter(),
+        );
+        self
+    }
+
+    fn build_new_nodes(
+        mut self,
+        index: u32,
+        text: String,
+        add_start_index: usize,
+        node_where_it_got_inserted: Node,
+    ) -> Vec<Node> {
         let length_before_insertion_node;
         if node_where_it_got_inserted.node_type == ORIGINAL {
             length_before_insertion_node = index;
@@ -195,7 +212,6 @@ impl PieceTable {
             length_before_insertion_node =
                 index - node_where_it_got_inserted.start - self.original.len() as u32;
         };
-
         let node_before_insertion = Node {
             node_type: node_where_it_got_inserted.node_type,
             length: length_before_insertion_node as usize,
@@ -206,23 +222,15 @@ impl PieceTable {
             length: text.len(),
             start: add_start_index as u32,
         };
-
         let length_after_insertion =
             node_where_it_got_inserted.length - node_before_insertion.length;
-
         let node_after_insertion = Node {
             node_type: node_where_it_got_inserted.node_type,
             length: length_after_insertion,
             start: node_before_insertion.start + node_before_insertion.length as u32,
         };
-
         let new_nodes = vec![node_before_insertion, new_node, node_after_insertion];
-
-        self.nodes.splice(
-            index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
-            new_nodes.into_iter(),
-        );
-        self
+        new_nodes
     }
 
     fn get_node_where_it_got_inserted_and_index(&self, index: u32) -> (Node, usize) {
