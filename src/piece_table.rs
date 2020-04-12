@@ -75,10 +75,10 @@ impl PieceTable {
                 start: previous_node.start,
                 length: previous_node.length + text.len(),
             };
-            self.nodes
-                .splice(
-                    self.nodes.len() - 1..self.nodes.len(),
-                    vec![new_node].into_iter());
+            self.nodes.splice(
+                self.nodes.len() - 1..self.nodes.len(),
+                vec![new_node].into_iter(),
+            );
         } else {
             let new_node = Node {
                 node_type: ADDED,
@@ -222,7 +222,7 @@ impl PieceTable {
 
         self.nodes.splice(
             index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
-            new_nodes.into_iter(),
+            new_nodes.into_iter().filter(|node| node.length != 0),
         );
         self
     }
@@ -497,13 +497,14 @@ mod tests {
         let mut piece_table = PieceTable::new(input);
         piece_table = piece_table.push(pushed_input);
 
-        let added_str = String::from( " for unit tests");
+        let added_str = String::from(" for unit tests");
 
         // When
         let final_result = piece_table.insert(14, added_str);
 
         // Then
         let text = final_result.get_text();
+        assert_eq!(3, final_result.nodes.len());
         assert_eq!(text, String::from("This is a text for unit tests..."))
     }
 
@@ -529,6 +530,31 @@ mod tests {
         assert_eq!(
             text,
             String::from("This is an another text. This is a new second piece.")
+        )
+    }
+
+    #[test]
+    fn insert_should_insert_text_several_times_in_several_nodes_consecutively() {
+        // Given
+        let input = String::from("This is a text.");
+        let pushed_input = String::from(" This is a second piece.");
+        let mut piece_table = PieceTable::new(input);
+        piece_table = piece_table.push(pushed_input);
+
+        let added_str = String::from("n");
+        let added_str_2 = String::from("e");
+        let added_str_3 = String::from("w ");
+
+        // When
+        let mut pre_result = piece_table.insert(26, added_str);
+        let pre_result_1 = pre_result.insert(27, added_str_2);
+        let final_result = pre_result_1.insert(28, added_str_3);
+
+        // Then
+        let text = final_result.get_text();
+        assert_eq!(
+            text,
+            String::from("This is a text. This is a new second piece.")
         )
     }
 
