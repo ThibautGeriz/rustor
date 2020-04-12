@@ -35,7 +35,7 @@ impl PartialEq<PieceTable> for PieceTable {
 }
 
 impl PieceTable {
-    fn new(original: String) -> PieceTable {
+    pub fn new(original: String) -> PieceTable {
         let original_length = original.len();
         let original_node = Node {
             node_type: ORIGINAL,
@@ -49,7 +49,7 @@ impl PieceTable {
         }
     }
 
-    fn get_text(&self) -> String {
+    pub fn get_text(&self) -> String {
         let mut text = String::from("");
         for node in &self.nodes {
             let start = node.start as usize;
@@ -64,7 +64,7 @@ impl PieceTable {
         text
     }
 
-    fn push(mut self, text: String) -> PieceTable {
+    pub fn push(mut self, text: String) -> PieceTable {
         let new_node = Node {
             node_type: ADDED,
             start: self.added.len() as u32,
@@ -75,7 +75,7 @@ impl PieceTable {
         self
     }
 
-    fn remove(mut self, start_index: u32, length: usize) -> PieceTable {
+    pub fn remove(mut self, start_index: u32, length: usize) -> PieceTable {
         let remove_start_index = start_index as usize;
         let remove_stop_index = remove_start_index + length;
         let mut text_index = 0 as usize;
@@ -181,18 +181,14 @@ impl PieceTable {
         node_stop_index > remove_start_index && remove_start_index >= node_start_index
     }
 
-    fn insert(&mut self, index: u32, text: String) {
-        if text.is_empty() {
-            return;
-        }
-
+    pub fn insert(mut self, index: u32, text: String) -> PieceTable {
         let add_start_index = self.added.len();
         self.added.push_str(&text);
 
         let (node_where_it_got_inserted, index_node_where_it_got_inserted) =
             self.get_node_where_it_got_inserted_and_index(index);
 
-        let mut length_before_insertion_node;
+        let length_before_insertion_node;
         if node_where_it_got_inserted.node_type == ORIGINAL {
             length_before_insertion_node = index;
         } else {
@@ -226,6 +222,7 @@ impl PieceTable {
             index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
             new_nodes.into_iter(),
         );
+        self
     }
 
     fn get_node_where_it_got_inserted_and_index(&self, index: u32) -> (Node, usize) {
@@ -404,7 +401,7 @@ mod tests {
         let added_str = String::from("new ");
 
         // When
-        piece_table.insert(10, added_str);
+        let final_result = piece_table.insert(10, added_str);
 
         // Then
         // Explanation of what should be in the list of nodes
@@ -412,7 +409,7 @@ mod tests {
         // ORIGINAL NODE: start: 11, length: 4
         // ADDED NODE: start: 0, length: 3
         // ADDED NODE: start: 3,length: 4
-        let text = piece_table.get_text();
+        let text = final_result.get_text();
         assert_eq!(text, String::from("This is a new text..."))
     }
 
@@ -427,7 +424,7 @@ mod tests {
         let added_str = String::from("new ");
 
         // When
-        piece_table.insert(26, added_str);
+        let final_result = piece_table.insert(26, added_str);
 
         // Then
         // Explanation of what should be in the list of nodes
@@ -435,7 +432,7 @@ mod tests {
         // ADDED NODE: start: 0, length: 11
         // ADDED NODE: start: 24,length: 4
         // ADDED NODE: start: 11, length: 13
-        let text = piece_table.get_text();
+        let text = final_result.get_text();
         assert_eq!(
             text,
             String::from("This is a text. This is a new second piece.")
@@ -455,12 +452,12 @@ mod tests {
         let added_str_3 = String::from("n");
 
         // When
-        piece_table.insert(26, added_str);
-        piece_table.insert(10, added_str_2);
-        piece_table.insert(9, added_str_3);
+        let mut pre_result = piece_table.insert(26, added_str);
+        let mut pre_result_1 = pre_result.insert(10, added_str_2);
+        let final_result = pre_result_1.insert(9, added_str_3);
 
         // Then
-        let text = piece_table.get_text();
+        let text = final_result.get_text();
         assert_eq!(
             text,
             String::from("This is an another text. This is a new second piece.")
