@@ -66,17 +66,19 @@ impl PieceTable {
 
     pub fn push(mut self, text: String) -> PieceTable {
         let previous_node = self.nodes.iter().last().unwrap();
-        if previous_node.node_type == ADDED
-            && previous_node.start as usize + previous_node.length == self.added.len()
-        {
-            self.added.push_str(&text);
+        let should_update_previous_node = previous_node.node_type == ADDED
+            && previous_node.start as usize + previous_node.length == self.added.len();
+
+        if should_update_previous_node {
             let new_node = Node {
                 node_type: ADDED,
                 start: previous_node.start,
                 length: previous_node.length + text.len(),
             };
             self.nodes
-                .splice(self.added.len() - 1..self.added.len(), vec![node].iter());
+                .splice(
+                    self.nodes.len() - 1..self.nodes.len(),
+                    vec![new_node].into_iter());
         } else {
             let new_node = Node {
                 node_type: ADDED,
@@ -84,8 +86,8 @@ impl PieceTable {
                 length: text.len(),
             };
             self.nodes.push(new_node);
-            self.added.push_str(&text);
         }
+        self.added.push_str(&text);
 
         self
     }
@@ -333,7 +335,7 @@ mod tests {
                 Node {
                     node_type: ORIGINAL,
                     start: 0,
-                    length: 15,
+                    length: 14,
                 },
                 Node {
                     node_type: ADDED,
@@ -485,6 +487,24 @@ mod tests {
             text,
             String::from("This is a text. This is a new second piece.")
         )
+    }
+
+    #[test]
+    fn insert_should_insert_text_in_the_middle_of_nodes() {
+        // Given
+        let input = String::from("This is a text");
+        let pushed_input = String::from("...");
+        let mut piece_table = PieceTable::new(input);
+        piece_table = piece_table.push(pushed_input);
+
+        let added_str = String::from( " for unit tests");
+
+        // When
+        let final_result = piece_table.insert(14, added_str);
+
+        // Then
+        let text = final_result.get_text();
+        assert_eq!(text, String::from("This is a new text for unit tests..."))
     }
 
     #[test]
