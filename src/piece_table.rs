@@ -217,8 +217,20 @@ impl PieceTable {
         let (node_where_it_got_inserted, index_node_where_it_got_inserted, text_index) =
             self.get_node_where_it_got_inserted_and_index(index);
 
-        let new_nodes =
-            self.build_new_nodes(index, text, add_start_index, node_where_it_got_inserted, text_index);
+        if node_where_it_got_inserted.start as usize + node_where_it_got_inserted.length
+            == add_start_index
+            && node_where_it_got_inserted.node_type == ADDED
+        {
+            return self;
+        }
+
+        let new_nodes = self.build_new_nodes(
+            index,
+            text,
+            add_start_index,
+            node_where_it_got_inserted,
+            text_index,
+        );
 
         self.nodes.splice(
             index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
@@ -233,16 +245,9 @@ impl PieceTable {
         text: String,
         added_length: usize,
         node_where_it_got_inserted: Node,
-        text_index: usize
+        text_index: usize,
     ) -> Vec<Node> {
-        //remove_start_index - node_start_index
         let length_before_insertion_node = index - text_index as u32;
-//            if node_where_it_got_inserted.node_type == ORIGINAL {
-//            index
-//        } else {
-//            index - node_where_it_got_inserted.start - self.original.len() as u32
-//        };
-
         let node_before_insertion = Node {
             node_type: node_where_it_got_inserted.node_type,
             length: length_before_insertion_node as usize,
@@ -267,23 +272,23 @@ impl PieceTable {
         let mut total_offset = 0;
         let mut index_node_where_it_got_inserted = 0;
 
-        let mut node_where_it_got_inserted = self.nodes.get(0).unwrap();
-
-        self.nodes.iter().for_each(|node| {
-            total_offset += node.length;
-            if total_offset as u32 > index {
-                node_where_it_got_inserted =
-                    self.nodes.get(index_node_where_it_got_inserted).unwrap();
-                total_offset -= node.length;
-                return;
-            }
-            index_node_where_it_got_inserted += 1;
-        });
+        let node_where_it_got_inserted = self
+            .nodes
+            .iter()
+            .find(|node| {
+                if (total_offset + node.length) as u32 >= index {
+                    return true;
+                }
+                total_offset += node.length;
+                index_node_where_it_got_inserted += 1;
+                false
+            })
+            .unwrap();
 
         (
             *node_where_it_got_inserted,
             index_node_where_it_got_inserted,
-            total_offset
+            total_offset,
         )
     }
 }
@@ -560,7 +565,8 @@ mod tests {
         assert_eq!(
             text,
             String::from("This is a text. This is a new second piece.")
-        )
+        );
+        assert_eq!(4, final_result.nodes.len());
     }
 
     #[test]
@@ -576,7 +582,8 @@ mod tests {
         let expected_node = piece_table.nodes.get(0).unwrap().clone();
 
         // When
-        let (result, result_index, text_index) = piece_table.get_node_where_it_got_inserted_and_index(5);
+        let (result, result_index, text_index) =
+            piece_table.get_node_where_it_got_inserted_and_index(5);
 
         // Then
         assert_eq!(0, result_index);
@@ -597,7 +604,8 @@ mod tests {
         let expected_node = piece_table.nodes.get(1).unwrap().clone();
 
         // When
-        let (result, result_index, text_index) = piece_table.get_node_where_it_got_inserted_and_index(20);
+        let (result, result_index, text_index) =
+            piece_table.get_node_where_it_got_inserted_and_index(20);
 
         // Then
         assert_eq!(1, result_index);
