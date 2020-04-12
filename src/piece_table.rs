@@ -192,7 +192,13 @@ impl PieceTable {
         let (node_where_it_got_inserted, index_node_where_it_got_inserted) =
             self.get_node_where_it_got_inserted_and_index(index);
 
-        let length_before_insertion_node = index - node_where_it_got_inserted.start;
+        let mut length_before_insertion_node;
+        if node_where_it_got_inserted.node_type == ORIGINAL {
+            length_before_insertion_node = index;
+        } else {
+            length_before_insertion_node =
+                index - node_where_it_got_inserted.start - self.original.len() as u32;
+        };
 
         let node_before_insertion = Node {
             node_type: node_where_it_got_inserted.node_type,
@@ -204,6 +210,7 @@ impl PieceTable {
             length: text.len(),
             start: add_start_index as u32,
         };
+
         let length_after_insertion =
             node_where_it_got_inserted.length - node_before_insertion.length;
 
@@ -227,7 +234,7 @@ impl PieceTable {
 
         let mut node_where_it_got_inserted = self.nodes.get(0).unwrap();
 
-        self.nodes.iter().for_each(|node| {
+        self.nodes.clone().into_iter().for_each(|node| {
             total_offset += node.length;
             if total_offset as u32 > index {
                 node_where_it_got_inserted =
@@ -400,6 +407,11 @@ mod tests {
         piece_table.insert(10, added_str);
 
         // Then
+        // Explanation of what should be in the list of nodes
+        // ORIGINAL NODE: start: 0, length: 10
+        // ORIGINAL NODE: start: 11, length: 4
+        // ADDED NODE: start: 0, length: 3
+        // ADDED NODE: start: 3,length: 4
         let text = piece_table.get_text();
         assert_eq!(text, String::from("This is a new text..."))
     }
@@ -418,10 +430,40 @@ mod tests {
         piece_table.insert(26, added_str);
 
         // Then
+        // Explanation of what should be in the list of nodes
+        // ORIGINAL NODE: start: 0, length: 15
+        // ADDED NODE: start: 0, length: 11
+        // ADDED NODE: start: 24,length: 4
+        // ADDED NODE: start: 11, length: 13
         let text = piece_table.get_text();
         assert_eq!(
             text,
-            String::from("This is a text.  This is a new second piece.")
+            String::from("This is a text. This is a new second piece.")
+        )
+    }
+
+    #[test]
+    fn insert_should_insert_text_several_times_in_several_nodes() {
+        // Given
+        let input = String::from("This is a text.");
+        let pushed_input = String::from(" This is a second piece.");
+        let mut piece_table = PieceTable::new(input);
+        piece_table = piece_table.push(pushed_input);
+
+        let added_str = String::from("new ");
+        let added_str_2 = String::from("another ");
+        let added_str_3 = String::from("n");
+
+        // When
+        piece_table.insert(26, added_str);
+        piece_table.insert(10, added_str_2);
+        piece_table.insert(9, added_str_3);
+
+        // Then
+        let text = piece_table.get_text();
+        assert_eq!(
+            text,
+            String::from("This is an another text. This is a new second piece.")
         )
     }
 
