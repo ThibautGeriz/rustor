@@ -224,26 +224,10 @@ impl PieceTable {
             node_where_it_got_inserted,
             text_index,
         );
-        let is_node_at_the_end_added = new_nodes[0].start as usize + new_nodes[0].length
-            == new_nodes[1].start as usize
-            && new_nodes[0].node_type == ADDED;
-
-        let new_new_nodes = if is_node_at_the_end_added {
-            vec![
-                Node {
-                    node_type: new_nodes[0].node_type,
-                    start: new_nodes[0].start,
-                    length: new_nodes[0].length + new_nodes[1].length,
-                },
-                new_nodes[2],
-            ]
-        } else {
-            new_nodes
-        };
 
         self.nodes.splice(
             index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
-            new_new_nodes.into_iter().filter(|node| node.length != 0),
+            new_nodes.into_iter().filter(|node| node.length != 0),
         );
         self
     }
@@ -274,7 +258,23 @@ impl PieceTable {
             length: length_after_insertion,
             start: node_before_insertion.start + node_before_insertion.length as u32,
         };
-        vec![node_before_insertion, new_node, node_after_insertion]
+        let is_node_at_the_end_added = node_before_insertion.start as usize
+            + node_before_insertion.length
+            == new_node.start as usize
+            && node_before_insertion.node_type == ADDED;
+
+        if is_node_at_the_end_added {
+            vec![
+                Node {
+                    node_type: node_before_insertion.node_type,
+                    start: node_before_insertion.start,
+                    length: node_before_insertion.length + new_node.length,
+                },
+                node_after_insertion,
+            ]
+        } else {
+            vec![node_before_insertion, new_node, node_after_insertion]
+        }
     }
 
     fn get_node_where_it_got_inserted_and_index(&self, index: u32) -> (Node, usize, usize) {
