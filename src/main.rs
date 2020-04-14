@@ -14,6 +14,7 @@ use window::*;
 mod cursor;
 mod editor;
 mod file;
+mod piece_table;
 mod window;
 
 fn main() {
