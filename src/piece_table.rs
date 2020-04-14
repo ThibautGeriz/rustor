@@ -217,13 +217,6 @@ impl PieceTable {
         let (node_where_it_got_inserted, index_node_where_it_got_inserted, text_index) =
             self.get_node_where_it_got_inserted_and_index(index);
 
-        if node_where_it_got_inserted.start as usize + node_where_it_got_inserted.length
-            == add_start_index
-            && node_where_it_got_inserted.node_type == ADDED
-        {
-            return self;
-        }
-
         let new_nodes = self.build_new_nodes(
             index,
             text,
@@ -231,10 +224,26 @@ impl PieceTable {
             node_where_it_got_inserted,
             text_index,
         );
+        let is_node_at_the_end_added = new_nodes[0].start as usize + new_nodes[0].length
+            == new_nodes[1].start as usize
+            && new_nodes[0].node_type == ADDED;
+
+        let new_new_nodes = if is_node_at_the_end_added {
+            vec![
+                Node {
+                    node_type: new_nodes[0].node_type,
+                    start: new_nodes[0].start,
+                    length: new_nodes[0].length + new_nodes[1].length,
+                },
+                new_nodes[2],
+            ]
+        } else {
+            new_nodes
+        };
 
         self.nodes.splice(
             index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
-            new_nodes.into_iter().filter(|node| node.length != 0),
+            new_new_nodes.into_iter().filter(|node| node.length != 0),
         );
         self
     }
@@ -245,7 +254,7 @@ impl PieceTable {
         text: String,
         added_length: usize,
         node_where_it_got_inserted: Node,
-        text_index: usize
+        text_index: usize,
     ) -> Vec<Node> {
         let length_before_insertion_node = index - text_index as u32;
         let node_before_insertion = Node {
@@ -288,7 +297,7 @@ impl PieceTable {
         (
             *node_where_it_got_inserted,
             index_node_where_it_got_inserted,
-            total_offset
+            total_offset,
         )
     }
 }
