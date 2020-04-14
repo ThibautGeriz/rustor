@@ -188,7 +188,7 @@ impl PieceTable {
 
     fn is_deletion_at_the_beginning_of_node(
         node_start_index: usize,
-        node_stop_index: usize,
+        _node_stop_index: usize,
         remove_start_index: usize,
         remove_stop_index: usize,
     ) -> bool {
@@ -199,7 +199,7 @@ impl PieceTable {
         node_start_index: usize,
         node_stop_index: usize,
         remove_start_index: usize,
-        remove_stop_index: usize,
+        _remove_stop_index: usize,
     ) -> bool {
         node_stop_index > remove_start_index && remove_start_index >= node_start_index
     }
