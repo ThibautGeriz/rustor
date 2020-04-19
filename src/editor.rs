@@ -5,17 +5,18 @@ use termion::event::Key;
 
 use cursor::*;
 use file::*;
+use piece_table::PieceTable;
 
 #[derive(Debug)]
 pub struct Editor {
-    lines: Vec<String>,
+    piece_table: PieceTable,
     pub cursor: CursorPosition,
 }
 
 impl Editor {
     pub fn from(lines: Vec<String>) -> Editor {
         Editor {
-            lines,
+            piece_table: PieceTable::new(lines.join("\n")),
             cursor: CursorPosition::new(),
         }
     }
@@ -192,7 +193,7 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is  test")],
+            piece_table: PieceTable::new(vec![String::from("this is  test")].join("\n")),
             cursor,
         };
 
@@ -215,7 +216,7 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is a test")],
+            piece_table: PieceTable::new(vec![String::from("this is a test")].join("\n")),
             cursor,
         };
 
@@ -241,7 +242,7 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is a test")],
+            piece_table: PieceTable::new(vec![String::from("this is a test")].join("\n")),
             cursor,
         };
 
@@ -264,7 +265,7 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![String::from("this is aw test")],
+            piece_table: PieceTable::new(vec![String::from("this is aw test")].join("\n")),
             cursor,
         };
 
@@ -287,11 +288,11 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![
+            piece_table: PieceTable::new(vec![
                 String::from("this is a test"),
                 String::new(),
                 String::from("this is a test2"),
-            ],
+            ].join("\n")),
             cursor,
         };
 
@@ -314,11 +315,11 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![
+            piece_table: PieceTable::new(vec![
                 String::from("this is a test"),
                 String::from("this is a test2"),
                 String::from("this is a test3"),
-            ],
+            ].join("\n")),
             cursor,
         };
 
@@ -344,10 +345,10 @@ mod tests {
             y_offset: 0,
         };
         let mut editor = Editor {
-            lines: vec![
+            piece_table: PieceTable::new(vec![
                 String::from("this is a test"),
                 String::from("this is a test2"),
-            ],
+            ].join("\n")),
             cursor,
         };
 
@@ -370,12 +371,12 @@ mod tests {
             y_offset: 1,
         };
         let mut editor = Editor {
-            lines: vec![
+            piece_table: PieceTable::new(vec![
                 String::from("this is a test"),
                 String::from("this is a test2"),
                 String::from("this is a test3"),
                 String::from("this is a test4"),
-            ],
+            ].join("\n")),
             cursor,
         };
 
@@ -406,12 +407,12 @@ mod tests {
             y_offset: 1,
         };
         let mut editor = Editor {
-            lines: vec![
+            piece_table: PieceTable::new(vec![
                 String::from("this is a test"),
                 String::from("this is a test2"),
                 String::from("this is a test3"),
                 String::from("this is a test4"),
-            ],
+            ].join("\n")),
             cursor,
         };
 
@@ -442,12 +443,12 @@ mod tests {
             y_offset: 1,
         };
         let mut editor = Editor {
-            lines: vec![
+            piece_table: PieceTable::new(vec![
                 String::from("this is a test"),
                 String::from("this is a test2"),
                 String::from("this is a test3"),
                 String::from("this is a test4"),
-            ],
+            ].join("\n")),
             cursor,
         };
 
