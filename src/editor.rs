@@ -9,14 +9,17 @@ use piece_table::PieceTable;
 
 #[derive(Debug)]
 pub struct Editor {
+    lines: Vec<String>,
     piece_table: PieceTable,
     pub cursor: CursorPosition,
 }
 
 impl Editor {
     pub fn from(lines: Vec<String>) -> Editor {
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
         Editor {
-            piece_table: PieceTable::new(lines.join("\n")),
+            lines,
+            piece_table,
             cursor: CursorPosition::new(),
         }
     }
@@ -36,7 +39,7 @@ impl Editor {
     }
 
     pub fn get_number_of_lines(&self) -> usize {
-        self.lines.len()
+        self.piece_table.get_number_of_lines()
     }
 
     pub fn insert(&mut self, c: char, terminal_height: u16) {
@@ -192,8 +195,11 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
+        let lines = vec![String::from("this is  test")];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![String::from("this is  test")].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 
@@ -215,8 +221,11 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
+        let lines = vec![String::from("this is a test")];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![String::from("this is a test")].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 
@@ -241,8 +250,11 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
+        let lines = vec![String::from("this is a test")];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![String::from("this is a test")].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 
@@ -264,8 +276,12 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
+        let lines = vec![String::from("this is aw test")];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![String::from("this is aw test")].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 
@@ -287,12 +303,17 @@ mod tests {
             y: 2,
             y_offset: 0,
         };
+        let lines = vec![
+            String::from("this is a test"),
+            String::new(),
+            String::from("this is a test2"),
+        ];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
+
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![
-                String::from("this is a test"),
-                String::new(),
-                String::from("this is a test2"),
-            ].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 
@@ -314,12 +335,16 @@ mod tests {
             y: 2,
             y_offset: 0,
         };
+        let lines = vec![
+            String::from("this is a test"),
+            String::from("this is a test2"),
+            String::from("this is a test3"),
+        ];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![
-                String::from("this is a test"),
-                String::from("this is a test2"),
-                String::from("this is a test3"),
-            ].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 
@@ -344,11 +369,15 @@ mod tests {
             y: 1,
             y_offset: 0,
         };
+        let lines = vec![
+            String::from("this is a test"),
+            String::from("this is a test2"),
+        ];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![
-                String::from("this is a test"),
-                String::from("this is a test2"),
-            ].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 
@@ -370,13 +399,17 @@ mod tests {
             y: 3,
             y_offset: 1,
         };
+        let lines = vec![
+            String::from("this is a test"),
+            String::from("this is a test2"),
+            String::from("this is a test3"),
+            String::from("this is a test4"),
+        ];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![
-                String::from("this is a test"),
-                String::from("this is a test2"),
-                String::from("this is a test3"),
-                String::from("this is a test4"),
-            ].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 
@@ -406,13 +439,18 @@ mod tests {
             y: 1,
             y_offset: 1,
         };
+
+        let lines = vec![
+            String::from("this is a test"),
+            String::from("this is a test2"),
+            String::from("this is a test3"),
+            String::from("this is a test4"),
+        ];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![
-                String::from("this is a test"),
-                String::from("this is a test2"),
-                String::from("this is a test3"),
-                String::from("this is a test4"),
-            ].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 
@@ -442,13 +480,18 @@ mod tests {
             y: 1,
             y_offset: 1,
         };
+        let lines = vec![
+            String::from("this is a test"),
+            String::from("this is a test2"),
+            String::from("this is a test3"),
+            String::from("this is a test4"),
+        ];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
+
         let mut editor = Editor {
-            piece_table: PieceTable::new(vec![
-                String::from("this is a test"),
-                String::from("this is a test2"),
-                String::from("this is a test3"),
-                String::from("this is a test4"),
-            ].join("\n")),
+            lines,
+            piece_table,
             cursor,
         };
 

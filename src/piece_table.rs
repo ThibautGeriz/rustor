@@ -66,6 +66,13 @@ impl PieceTable {
         text
     }
 
+    // pub fn get_range_lines(&self, start: usize, stop: usize) -> &[String] {
+    // }
+
+    pub fn get_number_of_lines(&self) -> usize {
+        0
+    }
+
     #[allow(dead_code)]
     pub fn push(mut self, text: String) -> PieceTable {
         let previous_node = self.nodes.iter().last().unwrap();
@@ -675,5 +682,18 @@ mod tests {
         // Then
         assert_eq!(result, true);
         assert_eq!(result_1, false);
+    }
+
+    #[test]
+    fn get_number_of_lines_should_return_1_for_simple_text() {
+        // Given
+        let input = String::from("This is a text");
+
+        // When
+        let piece_table = PieceTable::new(input);
+
+        // Then
+        let number_of_line = piece_table.get_number_of_lines();
+        assert_eq!(number_of_line, 1)
     }
 }
