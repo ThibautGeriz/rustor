@@ -310,7 +310,6 @@ mod tests {
         ];
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
-
         let mut editor = Editor {
             lines,
             piece_table,
@@ -487,7 +486,6 @@ mod tests {
             String::from("this is a test4"),
         ];
         let piece_table = PieceTable::new(lines.clone().join("\n"));
-
 
         let mut editor = Editor {
             lines,

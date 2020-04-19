@@ -1,3 +1,5 @@
+use regex::Regex;
+
 use piece_table::NodeType::{ADDED, ORIGINAL};
 
 #[derive(Debug)]
@@ -70,7 +72,12 @@ impl PieceTable {
     // }
 
     pub fn get_number_of_lines(&self) -> usize {
-        0
+        let regex = Regex::new(r"\n").unwrap();
+        let mut number_of_lines = 1;
+        for cap in regex.captures_iter(&self.get_text()) {
+            number_of_lines += 1;
+        }
+        number_of_lines
     }
 
     #[allow(dead_code)]
@@ -695,5 +702,18 @@ mod tests {
         // Then
         let number_of_line = piece_table.get_number_of_lines();
         assert_eq!(number_of_line, 1)
+    }
+
+    #[test]
+    fn get_number_of_lines_should_return_3_for_simple_text() {
+        // Given
+        let input = String::from("This is a text\n bluh\n blah");
+
+        // When
+        let piece_table = PieceTable::new(input);
+
+        // Then
+        let number_of_line = piece_table.get_number_of_lines();
+        assert_eq!(number_of_line, 3)
     }
 }
