@@ -35,7 +35,7 @@ impl Editor {
     }
 
     fn get_range_lines(&self, start: usize, stop: usize) -> &[String] {
-        &self.lines[start..stop]
+        &self.piece_table.get_range_lines(start, stop) // lines[start..stop]
     }
 
     pub fn get_number_of_lines(&self) -> usize {

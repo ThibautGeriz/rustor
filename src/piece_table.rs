@@ -68,8 +68,11 @@ impl PieceTable {
         text
     }
 
-    // pub fn get_range_lines(&self, start: usize, stop: usize) -> &[String] {
-    // }
+     pub fn get_range_lines(&self, start: usize, stop: usize) -> &[str] {
+         let result: Vec<str> = self.get_text().split('\n')
+             .collect();
+         result.as_slice()
+     }
 
     pub fn get_number_of_lines(&self) -> usize {
         let regex = Regex::new(r"\n").unwrap();
