@@ -233,7 +233,7 @@ impl PieceTable {
      */
 
     #[allow(dead_code)]
-    pub fn insert(mut self, index: u32, text: String) -> PieceTable {
+    pub fn insert(&mut self, index: u32, text: String) {
         let add_start_index = self.added.len();
         self.added.push_str(&text);
 
@@ -252,7 +252,6 @@ impl PieceTable {
             index_node_where_it_got_inserted..index_node_where_it_got_inserted + 1,
             new_nodes.into_iter().filter(|node| node.length != 0),
         );
-        self
     }
 
     #[allow(dead_code)]
@@ -494,7 +493,7 @@ mod tests {
         let added_str = String::from("new ");
 
         // When
-        let final_result = piece_table.insert(10, added_str);
+        piece_table.insert(10, added_str);
 
         // Then
         // Explanation of what should be in the list of nodes
@@ -502,7 +501,7 @@ mod tests {
         // ORIGINAL NODE: start: 11, length: 4
         // ADDED NODE: start: 0, length: 3
         // ADDED NODE: start: 3,length: 4
-        let text = final_result.get_text();
+        let text = piece_table.get_text();
         assert_eq!(text, String::from("This is a new text..."))
     }
 
@@ -517,7 +516,7 @@ mod tests {
         let added_str = String::from("new ");
 
         // When
-        let final_result = piece_table.insert(26, added_str);
+        piece_table.insert(26, added_str);
 
         // Then
         // Explanation of what should be in the list of nodes
@@ -525,7 +524,7 @@ mod tests {
         // ADDED NODE: start: 0, length: 11
         // ADDED NODE: start: 24,length: 4
         // ADDED NODE: start: 11, length: 13
-        let text = final_result.get_text();
+        let text = piece_table.get_text();
         assert_eq!(
             text,
             String::from("This is a text. This is a new second piece.")
@@ -543,11 +542,11 @@ mod tests {
         let added_str = String::from(" for unit tests");
 
         // When
-        let final_result = piece_table.insert(14, added_str);
+        piece_table.insert(14, added_str);
 
         // Then
-        let text = final_result.get_text();
-        assert_eq!(3, final_result.nodes.len());
+        let text = piece_table.get_text();
+        assert_eq!(3, piece_table.nodes.len());
         assert_eq!(text, String::from("This is a text for unit tests..."))
     }
 
@@ -564,12 +563,12 @@ mod tests {
         let added_str_3 = String::from("n");
 
         // When
-        let mut pre_result = piece_table.insert(26, added_str);
-        let pre_result_1 = pre_result.insert(10, added_str_2);
-        let final_result = pre_result_1.insert(9, added_str_3);
+        piece_table.insert(26, added_str);
+        piece_table.insert(10, added_str_2);
+        piece_table.insert(9, added_str_3);
 
         // Then
-        let text = final_result.get_text();
+        let text = piece_table.get_text();
         assert_eq!(
             text,
             String::from("This is an another text. This is a new second piece.")
@@ -589,17 +588,17 @@ mod tests {
         let added_str_3 = String::from("w ");
 
         // When
-        let mut pre_result = piece_table.insert(26, added_str);
-        let pre_result_1 = pre_result.insert(27, added_str_2);
-        let final_result = pre_result_1.insert(28, added_str_3);
+        piece_table.insert(26, added_str);
+        piece_table.insert(27, added_str_2);
+        piece_table.insert(28, added_str_3);
 
         // Then
-        let text = final_result.get_text();
+        let text = piece_table.get_text();
         assert_eq!(
             text,
             String::from("This is a text. This is a new second piece.")
         );
-        assert_eq!(4, final_result.nodes.len());
+        assert_eq!(4, piece_table.nodes.len());
     }
 
     #[test]

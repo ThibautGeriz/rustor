@@ -42,6 +42,11 @@ impl Editor {
         self.piece_table.get_number_of_lines()
     }
 
+    pub fn insert_with_piece_table(&mut self, c: char, terminal_height: u16) {
+        self.piece_table.insert(0, c.to_string());
+        // manage cursor
+    }
+
     pub fn insert(&mut self, c: char, terminal_height: u16) {
         if c == '\n' {
             self.insert_new_line(terminal_height);
@@ -181,7 +186,24 @@ mod tests {
         editor.insert('x', 36);
 
         // Then
+
         assert_eq!(editor.lines, vec!["x"]);
+        assert_eq!(editor.cursor.x, 2);
+        assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 0);
+    }
+
+    #[test]
+    fn insert_char_should_insert_first_char_with_piece_table() {
+        // Given
+        let mut editor = Editor::from(vec![String::new()]);
+
+        // When
+        editor.insert('x', 36);
+
+        // Then
+
+        assert_eq!(editor.piece_table.get_text(), "x");
         assert_eq!(editor.cursor.x, 2);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
@@ -233,6 +255,7 @@ mod tests {
         editor.insert('\n', 36);
 
         // Then
+
         assert_eq!(editor.lines, vec!["this is a test", ""]);
         assert_eq!(editor.cursor.x, 1);
         assert_eq!(editor.cursor.y, 2);
