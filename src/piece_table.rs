@@ -2,7 +2,7 @@ use regex::Regex;
 
 use piece_table::NodeType::{ADDED, ORIGINAL};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PieceTable {
     original: String,
     added: String,
@@ -68,9 +68,13 @@ impl PieceTable {
         text
     }
 
-    pub fn get_range_lines<'a>(&'a self, start: usize, stop: usize) -> [&'a str] {
-        let r: Vec<&str> = self.get_text().split('\n').collect();
-        r[start..stop]
+    pub fn get_range_lines<'a>(self, start: usize, stop: usize) -> &'a [String] {
+        let lines = self.get_text().split('\n')
+            .map(|lineStr| String::from(lineStr))
+            .collect::<Vec<String>>();
+
+        println!("{:?}",lines);
+        return &(lines.clone().as_slice()[1..3]);
     }
 
     pub fn get_number_of_lines(&self) -> usize {
