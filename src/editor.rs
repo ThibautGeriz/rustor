@@ -62,12 +62,23 @@ impl Editor {
 
     pub fn remove(&mut self, terminal_height: u16) {
         let y_position_in_file = self.cursor.get_y_position_in_file() as usize;
-        let start_index = self.cursor.x * y_position_in_file as u16;
+        let start_index = self.get_cursor_position_in_file();
         if self.cursor.x > 1 {
             self.piece_table.remove(start_index as u32 - 2, 1);
         } else if y_position_in_file > 1 {
             self.piece_table.remove(start_index as u32 - 2, 1);
         }
+    }
+    fn get_cursor_position_in_file(&self) -> u32 {
+        let length = self.cursor.get_y_position_in_file() as usize;
+        let mut lines = self.get_range_lines(
+            0,
+            length,
+        );
+        let last_line: String = lines.last_mut()
+            .unwrap().chars().into_iter().take(self.cursor.x as usize).collect();
+        lines[length - 1] = last_line;
+        lines.join("\n").len() as u32
     }
 
     fn remove_char(&mut self) {
@@ -75,11 +86,6 @@ impl Editor {
         let current_line = &mut self.lines[y_position_in_file - 1];
         current_line.remove(self.cursor.x as usize - 2);
         self.cursor.move_left();
-    }
-
-    fn get_cursor_in_file(&self) -> u32 {
-        let lines = self.get_range_lines(0, self.cursor.get_y_position_in_file() as usize);
-        0
     }
 
     fn remove_line(&mut self, terminal_height: u16) {
