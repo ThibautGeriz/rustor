@@ -189,7 +189,7 @@ impl PieceTable {
                         length: node.length + remove_start_index - node_stop_index,
                     }];
                 } else {
-                    return vec![node];
+                    return vec![node.clone()];
                 }
             })
             .collect();
