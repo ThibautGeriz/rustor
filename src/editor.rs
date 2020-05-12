@@ -62,11 +62,13 @@ impl Editor {
 
     pub fn remove(&mut self, terminal_height: u16) {
         let y_position_in_file = self.cursor.get_y_position_in_file() as usize;
-        if self.cursor.x > 1 {
-            self.remove_char();
-        } else if y_position_in_file > 1 {
-            self.remove_line(terminal_height);
-        }
+        let start_index = self.cursor.x * self.cursor.y;
+        self.piece_table.remove(start_index as u32,1);
+//        if self.cursor.x > 1 {
+//            self.remove_char();
+//        } else if y_position_in_file > 1 {
+//            self.remove_line(terminal_height);
+//        }
     }
 
     fn remove_char(&mut self) {
@@ -370,7 +372,8 @@ mod tests {
         editor.remove(36);
 
         // Then
-        assert_eq!(editor.lines, vec!["this is a test", "this is a test2"]);
+        assert_eq!(editor.get_editor_lines(36),
+                   vec!["this is a test", "this is a test2"]);
         assert_eq!(editor.cursor.x, 1);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
@@ -403,7 +406,7 @@ mod tests {
 
         // Then
         assert_eq!(
-            editor.lines,
+            editor.get_editor_lines(36),
             vec![
                 "this is a test",
                 "this is a test2",

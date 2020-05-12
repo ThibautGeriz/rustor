@@ -126,13 +126,13 @@ impl PieceTable {
      */
 
     #[allow(dead_code)]
-    pub fn remove(mut self, start_index: u32, length: usize) -> PieceTable {
+    pub fn remove(&mut self, start_index: u32, length: usize) {
         let remove_start_index = start_index as usize;
         let remove_stop_index = remove_start_index + length;
         let mut text_index = 0 as usize;
         self.nodes = self
             .nodes
-            .into_iter()
+            .iter_mut()
             .flat_map(|node| {
                 let node_start_index = text_index;
                 let node_stop_index = text_index + node.length;
@@ -193,7 +193,6 @@ impl PieceTable {
                 }
             })
             .collect();
-        self
     }
 
     #[allow(dead_code)]
@@ -406,7 +405,7 @@ mod tests {
         let mut piece_table = PieceTable::new(input);
 
         // When
-        piece_table = piece_table.remove(15, 2);
+        piece_table.remove(15, 2);
 
         // Then
         let text = piece_table.get_text();
@@ -420,7 +419,7 @@ mod tests {
         let mut piece_table = PieceTable::new(input);
 
         // When
-        piece_table = piece_table.remove(0, 2);
+        piece_table.remove(0, 2);
 
         // Then
         let text = piece_table.get_text();
@@ -434,7 +433,7 @@ mod tests {
         let mut piece_table = PieceTable::new(input);
 
         // When
-        piece_table = piece_table.remove(0, 15);
+        piece_table.remove(0, 15);
 
         // Then
         let text = piece_table.get_text();
@@ -448,7 +447,7 @@ mod tests {
         let mut piece_table = PieceTable::new(input);
 
         // When
-        piece_table = piece_table.remove(7, 4);
+        piece_table.remove(7, 4);
 
         // Then
         let text = piece_table.get_text();
@@ -464,7 +463,7 @@ mod tests {
         piece_table = piece_table.push(input1);
 
         // When
-        piece_table = piece_table.remove(26, 2);
+        piece_table.remove(26, 2);
 
         // Then
         let text = piece_table.get_text();
@@ -482,7 +481,7 @@ mod tests {
         piece_table = piece_table.push(input2);
 
         // When
-        piece_table = piece_table.remove(31, 4);
+        piece_table.remove(31, 4);
 
         // Then
         let text = piece_table.get_text();
