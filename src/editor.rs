@@ -24,7 +24,7 @@ impl Editor {
         }
     }
 
-    pub fn get_editor_lines(&self, terminal_height: usize) -> &[String] {
+    pub fn get_editor_lines(&self, terminal_height: usize) -> Vec<String> {
         let y_offset = (self.cursor.y_offset) as usize;
         let number_of_lines = self.get_number_of_lines();
         let max_line = cmp::min(
@@ -34,8 +34,8 @@ impl Editor {
         self.get_range_lines(y_offset, max_line)
     }
 
-    fn get_range_lines<'a>(&'a self, start: usize, stop: usize) -> &'a[String] {
-        self.piece_table.get_range_lines(start, stop).as_slice()
+    fn get_range_lines(&self, start: usize, stop: usize) -> Vec<String> {
+        self.piece_table.get_range_lines(start, stop)
     }
 
     pub fn get_number_of_lines(&self) -> usize {
@@ -44,11 +44,6 @@ impl Editor {
 
     pub fn insert(&mut self, c: char, terminal_height: u16) {
         self.insert_in_piece_table(c, terminal_height);
-        if c == '\n' {
-            self.insert_new_line(terminal_height);
-        } else {
-            self.insert_char(c);
-        }
     }
 
     fn insert_in_piece_table(&mut self, c: char, terminal_height: u16) {
@@ -63,31 +58,6 @@ impl Editor {
         } else {
             self.cursor.x += 1;
         }
-    }
-
-    fn insert_new_line(&mut self, terminal_height: u16) {
-        let y_position_in_file = self.cursor.get_y_position_in_file() as usize;
-        let current_line = self.lines[y_position_in_file - 1].clone();
-        let nb_char_in_current_line = current_line.len() as u16;
-        let end_of_line =
-            &current_line[self.cursor.x as usize - 1..nb_char_in_current_line as usize];
-        self.lines
-            .insert(y_position_in_file, String::from(end_of_line));
-        let current_line = &mut self.lines[y_position_in_file - 1];
-        current_line.truncate(self.cursor.x as usize - 1);
-        if self.cursor.y == terminal_height - 1 {
-            self.cursor.x = 1;
-            self.cursor.y_offset += 1;
-        } else {
-            self.cursor.x = 1;
-            self.cursor.y += 1;
-        }
-    }
-
-    fn insert_char(&mut self, c: char) {
-        let current_line = &mut self.lines[self.cursor.get_y_position_in_file() as usize - 1];
-        current_line.insert(self.cursor.x as usize - 1, c);
-        self.cursor.x += 1;
     }
 
     pub fn remove(&mut self, terminal_height: u16) {
@@ -182,8 +152,7 @@ mod tests {
         assert_eq!(editor.cursor.x, 2);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.lines.len(), 1);
-        assert_eq!(editor.lines[0], "t");
-        assert_eq!(editor.lines[0], "t");
+        assert_eq!(editor.get_editor_lines(20), vec!["t"]);
         assert_eq!(editor.get_number_of_lines(), 1);
     }
 
@@ -278,7 +247,8 @@ mod tests {
         editor.insert('\n', 36);
 
         // Then
-        assert_eq!(editor.lines, vec!["this is a", " test"]);
+        // assert_eq!(editor.lines, vec!["this is a", " test"]);
+        assert_eq!(editor.get_editor_lines(20), vec!["this is a", " test"]);
         assert_eq!(editor.cursor.x, 1);
         assert_eq!(editor.cursor.y, 2);
         assert_eq!(editor.cursor.y_offset, 0);

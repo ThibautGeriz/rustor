@@ -69,14 +69,15 @@ impl PieceTable {
     }
 
     pub fn get_range_lines(&self, start: usize, stop: usize) -> Vec<String> {
-        let lines: Vec<String> = self.get_text().split('\n')
+        let lines: Vec<String> = self
+            .get_text()
+            .split('\n')
             .map(|lineStr| String::from(lineStr))
             .enumerate()
-            .filter(|&(i, _)| i >= start && i <= stop)
+            .filter(|&(i, _)| i >= start && i < stop)
             .map(|(_, e)| e)
             .collect::<Vec<String>>();
 
-        println!("{:?}", lines);
         lines
     }
 
