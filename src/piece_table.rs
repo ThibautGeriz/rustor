@@ -68,13 +68,16 @@ impl PieceTable {
         text
     }
 
-    pub fn get_range_lines<'a>(self, start: usize, stop: usize) -> &'a [String] {
-        let lines = self.get_text().split('\n')
+    pub fn get_range_lines(&self, start: usize, stop: usize) -> Vec<String> {
+        let lines: Vec<String> = self.get_text().split('\n')
             .map(|lineStr| String::from(lineStr))
+            .enumerate()
+            .filter(|&(i, _)| i >= start && i <= stop)
+            .map(|(_, e)| e)
             .collect::<Vec<String>>();
 
-        println!("{:?}",lines);
-        return &(lines.clone().as_slice()[1..3]);
+        println!("{:?}", lines);
+        lines
     }
 
     pub fn get_number_of_lines(&self) -> usize {

@@ -34,9 +34,8 @@ impl Editor {
         self.get_range_lines(y_offset, max_line)
     }
 
-    fn get_range_lines(&self, start: usize, stop: usize) -> &[String] {
-        let clone = self.piece_table.clone();
-        clone.get_range_lines(start, stop) // lines[start..stop]
+    fn get_range_lines<'a>(&'a self, start: usize, stop: usize) -> &'a[String] {
+        self.piece_table.get_range_lines(start, stop).as_slice()
     }
 
     pub fn get_number_of_lines(&self) -> usize {
