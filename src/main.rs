@@ -11,6 +11,7 @@ use termion::screen::*;
 use editor::*;
 use file::*;
 use window::*;
+use std::env::args;
 
 mod cursor;
 mod editor;

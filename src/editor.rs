@@ -56,7 +56,7 @@ impl Editor {
 
     fn insert_in_piece_table(&mut self, c: char, terminal_height: u16) {
         self.piece_table
-            .insert(self.cursor.x as u32 - 1, c.to_string());
+            .insert(self.get_cursor_position_in_file(), c.to_string());
         if c == '\n' && self.cursor.y == terminal_height - 1 {
             self.cursor.x = 1;
             self.cursor.y_offset += 1;
@@ -80,8 +80,7 @@ impl Editor {
             let lines = self.get_editor_lines(terminal_height as usize);
             self.cursor.x = (lines[self.cursor.y as usize].len()) as u16 - 1;
             if self.cursor.y_offset > 0
-                && self.get_number_of_lines() as u16 - self.cursor.y_offset < terminal_height
-            {
+                && self.get_number_of_lines() as u16 - self.cursor.y_offset < terminal_height {
                 self.cursor.y_offset -= 1;
                 self.cursor.y += 1;
             }
