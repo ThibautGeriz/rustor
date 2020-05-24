@@ -27,11 +27,8 @@ impl Editor {
     pub fn get_editor_lines(&self, terminal_height: usize) -> Vec<String> {
         let y_offset = (self.cursor.y_offset) as usize;
         let number_of_lines = self.get_number_of_lines();
-        let max_line: usize = Editor::compute_max_line_of_editor(
-            number_of_lines,
-            terminal_height,
-            y_offset,
-        );
+        let max_line: usize =
+            Editor::compute_max_line_of_editor(number_of_lines, terminal_height, y_offset);
         self.get_range_lines(y_offset, max_line)
     }
 
@@ -40,10 +37,7 @@ impl Editor {
         terminal_height: usize,
         y_offset: usize,
     ) -> usize {
-        return cmp::min(
-            number_of_lines,
-            terminal_height + y_offset,
-        );
+        return cmp::min(number_of_lines, terminal_height + y_offset);
     }
 
     fn get_range_lines(&self, start: usize, stop: usize) -> Vec<String> {
@@ -87,12 +81,11 @@ impl Editor {
     }
     fn get_cursor_position_in_file(&self) -> u32 {
         let length = self.cursor.get_y_position_in_file() as usize;
-        let mut lines = self.get_range_lines(
-            0,
-            length,
-        );
-        let last_line: String = lines.last_mut()
-            .unwrap().chars()
+        let mut lines = self.get_range_lines(0, length);
+        let last_line: String = lines
+            .last_mut()
+            .unwrap()
+            .chars()
             .into_iter()
             .take(self.cursor.x as usize - 1)
             .collect();
@@ -436,11 +429,11 @@ mod tests {
         };
 
         // When
-        editor.remove(36);
+        editor.remove(3);
 
         // Then
         assert_eq!(
-            editor.get_editor_lines(36),
+            editor.get_range_lines(0, 4),
             vec![
                 "this is a test",
                 "this is a test2",
@@ -481,7 +474,7 @@ mod tests {
 
         // Then
         assert_eq!(
-            editor.lines,
+            editor.get_range_lines(0, 4),
             vec![
                 "this is a test",
                 "thi is a test2",
@@ -521,7 +514,7 @@ mod tests {
 
         // Then
         assert_eq!(
-            editor.lines,
+            editor.get_range_lines(0, 4),
             vec![
                 "this is a testthis is a test2",
                 "this is a test3",
@@ -548,7 +541,7 @@ mod tests {
         ];
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
-        let mut editor = Editor {
+        let editor = Editor {
             lines,
             piece_table,
             cursor,
@@ -559,5 +552,34 @@ mod tests {
 
         // Then
         assert_eq!(result, 15);
+    }
+
+    #[test]
+    fn get_cursor_position_in_file_should_compute_nb_of_characters_with_offset() {
+        // Given
+        let cursor = CursorPosition {
+            x: 5,
+            y: 3,
+            y_offset: 1,
+        };
+        let lines = vec![
+            String::from("this is a test"),
+            String::from("this is a test2"),
+            String::from("this is a test3"),
+            String::from("this is a test4"),
+        ];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
+        let editor = Editor {
+            lines,
+            piece_table,
+            cursor,
+        };
+
+        // When
+        let result = editor.get_cursor_position_in_file();
+
+        // Then
+        assert_eq!(result, 51);
     }
 }
