@@ -42,6 +42,10 @@ impl Editor {
         self.piece_table.get_range_lines(start, stop)
     }
 
+    pub fn get_all_lines(&self) -> Vec<String> {
+        self.piece_table.get_all_lines()
+    }
+
     pub fn get_number_of_lines(&self) -> usize {
         self.piece_table.get_number_of_lines()
     }
@@ -114,18 +118,23 @@ pub fn handle_key_press(
             editor.cursor.move_left();
         }
         Key::Right => {
-            editor.cursor.move_right(&editor.lines);
+            editor.cursor.move_right(&editor.get_all_lines());
         }
         Key::Up => {
-            editor.cursor.move_up(&editor.lines);
+            editor
+                .cursor
+                .move_up(&editor.get_editor_lines(terminal_height as usize));
         }
         Key::Ctrl('s') => {
             if let Some(file_name) = file_name_option {
-                save_to_file(file_name, &editor.lines).unwrap();
+                save_to_file(file_name, editor.piece_table.get_text()).unwrap();
             }
         }
         Key::Down => {
-            editor.cursor.move_down(&editor.lines, terminal_height);
+            editor.cursor.move_down(
+                &editor.get_editor_lines(terminal_height as usize),
+                terminal_height,
+            );
         }
         Key::Esc => {
             return false;
@@ -154,7 +163,7 @@ mod tests {
         // Then
         assert_eq!(editor.cursor.x, 2);
         assert_eq!(editor.cursor.y, 1);
-        assert_eq!(editor.lines.len(), 1);
+        assert_eq!(editor.get_all_lines().len(), 1);
         assert_eq!(editor.get_editor_lines(20), vec!["t"]);
         assert_eq!(editor.get_number_of_lines(), 1);
     }

@@ -79,6 +79,15 @@ impl PieceTable {
         lines
     }
 
+    pub fn get_all_lines(&self) -> Vec<String> {
+        let lines: Vec<String> = self
+            .get_text()
+            .split('\n')
+            .map(|line_str| String::from(line_str))
+            .collect();
+        lines
+    }
+
     pub fn get_number_of_lines(&self) -> usize {
         let regex = Regex::new(r"\n").unwrap();
         let mut number_of_lines = 1;
@@ -186,7 +195,8 @@ impl PieceTable {
                         length: node.length + remove_start_index - node_stop_index,
                     }];
                 } else {
-                    return vec![node.clone()];
+                    vec![*node]
+                    // return vec![node.clone()];
                 }
             })
             .collect();

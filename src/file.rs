@@ -28,10 +28,9 @@ pub fn init_lines(file_name_option: Option<&String>) -> Vec<String> {
     lines
 }
 
-pub fn save_to_file(file_name: &str, lines: &[String]) -> std::io::Result<()> {
+pub fn save_to_file(file_name: &str, text: String) -> std::io::Result<()> {
     let mut file = File::create(file_name)?;
-    let content: String = lines.join("\n");
-    file.write_all(content.as_bytes())?;
+    file.write_all(text.as_bytes())?;
     Ok(())
 }
 
