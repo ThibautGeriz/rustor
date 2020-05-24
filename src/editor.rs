@@ -27,11 +27,23 @@ impl Editor {
     pub fn get_editor_lines(&self, terminal_height: usize) -> Vec<String> {
         let y_offset = (self.cursor.y_offset) as usize;
         let number_of_lines = self.get_number_of_lines();
-        let max_line = cmp::min(
+        let max_line: usize = Editor::compute_max_line_of_editor(
             number_of_lines,
-            terminal_height as usize + y_offset as usize,
+            terminal_height,
+            y_offset,
         );
         self.get_range_lines(y_offset, max_line)
+    }
+
+    fn compute_max_line_of_editor(
+        number_of_lines: usize,
+        terminal_height: usize,
+        y_offset: usize,
+    ) -> usize {
+        return cmp::min(
+            number_of_lines,
+            terminal_height + y_offset,
+        );
     }
 
     fn get_range_lines(&self, start: usize, stop: usize) -> Vec<String> {
@@ -65,8 +77,14 @@ impl Editor {
         let start_index = self.get_cursor_position_in_file();
         if self.cursor.x > 1 {
             self.piece_table.remove(start_index as u32 - 2, 1);
+            self.cursor.x = self.cursor.x - 1;
         } else if y_position_in_file > 1 {
-            self.piece_table.remove(start_index as u32 - 2, 1);
+            self.piece_table.remove(start_index as u32 - 1, 1);
+            self.cursor.y = self.cursor.y - 1;
+            let lines = self.get_editor_lines(36);
+            print!("{:?}", lines);
+            print!("{:?}", lines[self.cursor.y as usize - 1]);
+            self.cursor.x = (lines[self.cursor.y as usize - 1].len()) as u16;
         }
     }
     fn get_cursor_position_in_file(&self) -> u32 {
@@ -76,7 +94,10 @@ impl Editor {
             length,
         );
         let last_line: String = lines.last_mut()
-            .unwrap().chars().into_iter().take(self.cursor.x as usize).collect();
+            .unwrap().chars()
+            .into_iter()
+            .take(self.cursor.x as usize)
+            .collect();
         lines[length - 1] = last_line;
         lines.join("\n").len() as u32
     }
@@ -287,7 +308,7 @@ mod tests {
         editor.remove(36);
 
         // Then
-        assert_eq!(editor.lines, vec!["this is a test"]);
+        assert_eq!(editor.get_editor_lines(36), vec!["this is a test"]);
         assert_eq!(editor.cursor.x, 10);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
@@ -318,10 +339,13 @@ mod tests {
         editor.remove(36);
 
         // Then
-        assert_eq!(editor.lines, vec!["this is a test", "this is a test2"]);
-        assert_eq!(editor.cursor.x, 15);
+        assert_eq!(editor.cursor.x, 14);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
+        assert_eq!(
+            editor.get_editor_lines(36),
+            vec!["this is a test", "this is a test2"]
+        );
     }
 
     #[test]
@@ -350,7 +374,7 @@ mod tests {
 
         // Then
         assert_eq!(
-            editor.lines,
+            editor.get_editor_lines(36),
             vec!["this is a testthis is a test2", "this is a test3"]
         );
         assert_eq!(editor.cursor.x, 15);
