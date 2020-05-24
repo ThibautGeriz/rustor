@@ -9,7 +9,6 @@ use piece_table::PieceTable;
 
 #[derive(Debug)]
 pub struct Editor {
-    lines: Vec<String>,
     piece_table: PieceTable,
     pub cursor: CursorPosition,
 }
@@ -18,7 +17,6 @@ impl Editor {
     pub fn from(lines: Vec<String>) -> Editor {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
         Editor {
-            lines,
             piece_table,
             cursor: CursorPosition::new(),
         }
@@ -37,7 +35,7 @@ impl Editor {
         terminal_height: usize,
         y_offset: usize,
     ) -> usize {
-        return cmp::min(number_of_lines, terminal_height + y_offset);
+        cmp::min(number_of_lines, terminal_height + y_offset)
     }
 
     fn get_range_lines(&self, start: usize, stop: usize) -> Vec<String> {
@@ -77,6 +75,12 @@ impl Editor {
             self.cursor.y = self.cursor.y - 1;
             let lines = self.get_editor_lines(terminal_height as usize);
             self.cursor.x = (lines[self.cursor.y as usize].len()) as u16 - 1;
+            if self.cursor.y_offset > 0
+                && self.get_number_of_lines() as u16 - self.cursor.y_offset < terminal_height
+            {
+                self.cursor.y_offset -= 1;
+                self.cursor.y += 1;
+            }
         }
     }
     fn get_cursor_position_in_file(&self) -> u32 {
@@ -86,35 +90,10 @@ impl Editor {
             .last_mut()
             .unwrap()
             .chars()
-            .into_iter()
             .take(self.cursor.x as usize - 1)
             .collect();
         lines[length - 1] = last_line;
         lines.join("\n").len() as u32
-    }
-
-    fn remove_char(&mut self) {
-        let y_position_in_file = self.cursor.get_y_position_in_file() as usize;
-        let current_line = &mut self.lines[y_position_in_file - 1];
-        current_line.remove(self.cursor.x as usize - 2);
-        self.cursor.move_left();
-    }
-
-    fn remove_line(&mut self, terminal_height: u16) {
-        let cursor_before = self.cursor.clone();
-        let y_position_in_file = cursor_before.get_y_position_in_file() as usize;
-        self.cursor.move_up(&self.lines);
-        self.cursor.move_to_end_of_line(&self.lines);
-        let current_line = self.lines[y_position_in_file - 1].clone();
-        let previous_line = &mut self.lines[y_position_in_file - 2];
-        previous_line.push_str(&current_line);
-        self.lines.remove(y_position_in_file - 1);
-        if self.cursor.y_offset > 0
-            && self.lines.len() as u16 - self.cursor.y_offset < terminal_height
-        {
-            self.cursor.y_offset -= 1;
-            self.cursor.y = cursor_before.y;
-        }
     }
 }
 
@@ -207,7 +186,6 @@ mod tests {
         let lines = vec![String::from("this is  test")];
         let piece_table = PieceTable::new(lines.clone().join("\n"));
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -233,7 +211,6 @@ mod tests {
         let lines = vec![String::from("this is a test")];
         let piece_table = PieceTable::new(lines.clone().join("\n"));
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -262,7 +239,6 @@ mod tests {
         let lines = vec![String::from("this is a test")];
         let piece_table = PieceTable::new(lines.clone().join("\n"));
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -271,7 +247,7 @@ mod tests {
         editor.insert('\n', 36);
 
         // Then
-        // assert_eq!(editor.lines, vec!["this is a", " test"]);
+        // assert_eq!(editor. vec!["this is a", " test"]);
         assert_eq!(editor.get_editor_lines(20), vec!["this is a", " test"]);
         assert_eq!(editor.cursor.x, 1);
         assert_eq!(editor.cursor.y, 2);
@@ -290,7 +266,6 @@ mod tests {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -321,7 +296,6 @@ mod tests {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -355,7 +329,6 @@ mod tests {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -388,7 +361,6 @@ mod tests {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -423,7 +395,6 @@ mod tests {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -464,7 +435,6 @@ mod tests {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -504,7 +474,6 @@ mod tests {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
         let mut editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -521,7 +490,7 @@ mod tests {
                 "this is a test4"
             ]
         );
-        assert_eq!(editor.cursor.x, 15);
+        assert_eq!(editor.cursor.x, 14);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
     }
@@ -542,7 +511,6 @@ mod tests {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
         let editor = Editor {
-            lines,
             piece_table,
             cursor,
         };
@@ -571,7 +539,6 @@ mod tests {
         let piece_table = PieceTable::new(lines.clone().join("\n"));
 
         let editor = Editor {
-            lines,
             piece_table,
             cursor,
         };

@@ -18,11 +18,13 @@ impl CursorPosition {
     pub fn move_left(&mut self) {
         self.x = cmp::max(1, self.x - 1);
     }
+
     pub fn move_right(&mut self, lines: &[String]) {
         let y_position_in_file = self.get_y_position_in_file() as usize;
         let nb_char_in_current_line = lines[y_position_in_file - 1].len() as u16;
         self.x = cmp::min(self.x + 1, nb_char_in_current_line + 1);
     }
+
     pub fn get_y_position_in_file(&self) -> u16 {
         self.y + self.y_offset
     }

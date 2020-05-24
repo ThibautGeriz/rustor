@@ -37,7 +37,6 @@ impl PartialEq<PieceTable> for PieceTable {
 }
 
 impl PieceTable {
-    #[allow(dead_code)]
     pub fn new(original: String) -> PieceTable {
         let original_length = original.len();
         let original_node = Node {
@@ -52,7 +51,6 @@ impl PieceTable {
         }
     }
 
-    #[allow(dead_code)]
     pub fn get_text(&self) -> String {
         let mut text = String::from("");
         for node in &self.nodes {
@@ -72,7 +70,7 @@ impl PieceTable {
         let lines: Vec<String> = self
             .get_text()
             .split('\n')
-            .map(|lineStr| String::from(lineStr))
+            .map(|line_str| String::from(line_str))
             .enumerate()
             .filter(|&(i, _)| i >= start && i < stop)
             .map(|(_, e)| e)
@@ -125,7 +123,6 @@ impl PieceTable {
      *
      */
 
-    #[allow(dead_code)]
     pub fn remove(&mut self, start_index: u32, length: usize) {
         let remove_start_index = start_index as usize;
         let remove_stop_index = remove_start_index + length;
@@ -195,7 +192,6 @@ impl PieceTable {
             .collect();
     }
 
-    #[allow(dead_code)]
     fn is_deletion_within_the_node(
         node_start_index: usize,
         node_stop_index: usize,
@@ -205,7 +201,6 @@ impl PieceTable {
         node_start_index < remove_start_index && node_stop_index > remove_stop_index
     }
 
-    #[allow(dead_code)]
     fn is_node_within_deletion(
         node_start_index: usize,
         node_stop_index: usize,
@@ -215,7 +210,6 @@ impl PieceTable {
         node_start_index >= remove_start_index && node_stop_index <= remove_stop_index
     }
 
-    #[allow(dead_code)]
     fn is_deletion_at_the_beginning_of_node(
         node_start_index: usize,
         _node_stop_index: usize,
@@ -225,7 +219,6 @@ impl PieceTable {
         node_start_index < remove_stop_index && remove_start_index <= node_start_index
     }
 
-    #[allow(dead_code)]
     fn is_deletion_at_the_end_of_node(
         node_start_index: usize,
         node_stop_index: usize,
@@ -241,7 +234,6 @@ impl PieceTable {
      *
      */
 
-    #[allow(dead_code)]
     pub fn insert(&mut self, index: u32, text: String) {
         let add_start_index = self.added.len();
         self.added.push_str(&text);
@@ -263,7 +255,6 @@ impl PieceTable {
         );
     }
 
-    #[allow(dead_code)]
     fn build_new_nodes(
         &self,
         index: u32,
@@ -308,7 +299,7 @@ impl PieceTable {
             vec![node_before_insertion, new_node, node_after_insertion]
         }
     }
-    #[allow(dead_code)]
+
     fn get_node_where_it_got_inserted_and_index(&self, index: u32) -> (Node, usize, usize) {
         let mut total_offset = 0;
         let mut index_node_where_it_got_inserted = 0;
