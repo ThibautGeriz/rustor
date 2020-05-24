@@ -76,15 +76,13 @@ impl Editor {
         let y_position_in_file = self.cursor.get_y_position_in_file() as usize;
         let start_index = self.get_cursor_position_in_file();
         if self.cursor.x > 1 {
-            self.piece_table.remove(start_index as u32 - 2, 1);
+            self.piece_table.remove(start_index as u32 - 1, 1);
             self.cursor.x = self.cursor.x - 1;
         } else if y_position_in_file > 1 {
             self.piece_table.remove(start_index as u32 - 1, 1);
             self.cursor.y = self.cursor.y - 1;
-            let lines = self.get_editor_lines(36);
-            print!("{:?}", lines);
-            print!("{:?}", lines[self.cursor.y as usize - 1]);
-            self.cursor.x = (lines[self.cursor.y as usize - 1].len()) as u16;
+            let lines = self.get_editor_lines(terminal_height as usize);
+            self.cursor.x = (lines[self.cursor.y as usize].len()) as u16 - 1;
         }
     }
     fn get_cursor_position_in_file(&self) -> u32 {
@@ -96,7 +94,7 @@ impl Editor {
         let last_line: String = lines.last_mut()
             .unwrap().chars()
             .into_iter()
-            .take(self.cursor.x as usize)
+            .take(self.cursor.x as usize - 1)
             .collect();
         lines[length - 1] = last_line;
         lines.join("\n").len() as u32
@@ -377,7 +375,7 @@ mod tests {
             editor.get_editor_lines(36),
             vec!["this is a testthis is a test2", "this is a test3"]
         );
-        assert_eq!(editor.cursor.x, 15);
+        assert_eq!(editor.cursor.x, 14);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
     }
@@ -533,5 +531,33 @@ mod tests {
         assert_eq!(editor.cursor.x, 15);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
+    }
+
+    #[test]
+    fn get_cursor_position_in_file_should_compute_nb_of_characters() {
+        // Given
+        let cursor = CursorPosition {
+            x: 1,
+            y: 2,
+            y_offset: 0,
+        };
+        let lines = vec![
+            String::from("this is a test"),
+            String::from("this is a test2"),
+            String::from("this is a test3"),
+        ];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
+        let mut editor = Editor {
+            lines,
+            piece_table,
+            cursor,
+        };
+
+        // When
+        let result = editor.get_cursor_position_in_file();
+
+        // Then
+        assert_eq!(result, 15);
     }
 }
