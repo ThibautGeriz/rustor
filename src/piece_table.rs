@@ -70,7 +70,7 @@ impl PieceTable {
         let lines: Vec<String> = self
             .get_text()
             .split('\n')
-            .map(|line_str| String::from(line_str))
+            .map(String::from)
             .enumerate()
             .filter(|&(i, _)| i >= start && i < stop)
             .map(|(_, e)| e)
@@ -80,21 +80,12 @@ impl PieceTable {
     }
 
     pub fn get_all_lines(&self) -> Vec<String> {
-        let lines: Vec<String> = self
-            .get_text()
-            .split('\n')
-            .map(|line_str| String::from(line_str))
-            .collect();
+        let lines: Vec<String> = self.get_text().split('\n').map(String::from).collect();
         lines
     }
 
     pub fn get_number_of_lines(&self) -> usize {
-        let regex = Regex::new(r"\n").unwrap();
-        let mut number_of_lines = 1;
-        for cap in regex.captures_iter(&self.get_text()) {
-            number_of_lines += 1;
-        }
-        number_of_lines
+        self.get_text().matches('\n').count() as usize + 1
     }
 
     #[allow(dead_code)]

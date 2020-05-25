@@ -73,11 +73,11 @@ impl Editor {
         let start_index = self.get_cursor_position_in_file();
         if self.cursor.x > 1 {
             self.piece_table.remove(start_index as u32 - 1, 1);
-            self.cursor.x = self.cursor.x - 1;
+            self.cursor.x -= 1;
         } else if y_position_in_file > 1 {
             let lines = self.get_all_lines();
             self.piece_table.remove(start_index as u32 - 1, 1);
-            self.cursor.y = self.cursor.y - 1;
+            self.cursor.y -= 1;
             self.cursor.x = (lines[y_position_in_file - 2].len()) as u16 + 1;
             if self.cursor.y_offset > 0
                 && self.get_number_of_lines() as u16 - self.cursor.y_offset < terminal_height

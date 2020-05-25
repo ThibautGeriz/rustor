@@ -10,7 +10,6 @@ use termion::screen::*;
 
 use editor::*;
 use file::*;
-use std::env::args;
 use window::*;
 
 mod cursor;
