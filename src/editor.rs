@@ -121,9 +121,7 @@ pub fn handle_key_press(
             editor.cursor.move_right(&editor.get_all_lines());
         }
         Key::Up => {
-            editor
-                .cursor
-                .move_up(&editor.get_editor_lines(terminal_height as usize));
+            editor.cursor.move_up(&editor.get_all_lines());
         }
         Key::Ctrl('s') => {
             if let Some(file_name) = file_name_option {
@@ -131,10 +129,9 @@ pub fn handle_key_press(
             }
         }
         Key::Down => {
-            editor.cursor.move_down(
-                &editor.get_editor_lines(terminal_height as usize),
-                terminal_height,
-            );
+            editor
+                .cursor
+                .move_down(&editor.get_all_lines(), terminal_height);
         }
         Key::Esc => {
             return false;
