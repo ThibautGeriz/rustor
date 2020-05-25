@@ -1,5 +1,3 @@
-use regex::Regex;
-
 use piece_table::NodeType::{ADDED, ORIGINAL};
 
 #[derive(Debug, Clone)]
@@ -625,7 +623,7 @@ mod tests {
     }
 
     #[test]
-    fn should_find_node_where_it_got_inserted_and_its_index_even_on_ADDED_nodes() {
+    fn should_find_node_where_it_got_inserted_and_its_index_even_on_added_nodes() {
         // Given
         let input = String::from("This is a text");
         let push_str = String::from(". And this is another sentence");

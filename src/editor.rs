@@ -15,9 +15,8 @@ pub struct Editor {
 
 impl Editor {
     pub fn from(lines: Vec<String>) -> Editor {
-        let piece_table = PieceTable::new(lines.clone().join("\n"));
         Editor {
-            piece_table,
+            piece_table: PieceTable::new(lines.join("\n")),
             cursor: CursorPosition::new(),
         }
     }

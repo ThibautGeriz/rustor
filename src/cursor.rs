@@ -57,7 +57,8 @@ impl CursorPosition {
             self.y = cmp::min(terminal_height - 1, self.y + 1);
         }
     }
-    #[warn(dead_code)]
+
+    #[allow(dead_code)]
     pub fn move_to_end_of_line(&mut self, lines: &[String]) {
         let y_position_in_file = self.get_y_position_in_file() as usize;
         let number_of_char_in_line = lines[y_position_in_file - 1].len() as u16;
