@@ -75,10 +75,10 @@ impl Editor {
             self.piece_table.remove(start_index as u32 - 1, 1);
             self.cursor.x = self.cursor.x - 1;
         } else if y_position_in_file > 1 {
-            let lines = self.get_editor_lines(terminal_height as usize);
+            let lines = self.get_all_lines();
             self.piece_table.remove(start_index as u32 - 1, 1);
             self.cursor.y = self.cursor.y - 1;
-            self.cursor.x = (lines[self.cursor.y as usize - 1].len()) as u16;
+            self.cursor.x = (lines[y_position_in_file - 2].len()) as u16 + 1;
             if self.cursor.y_offset > 0
                 && self.get_number_of_lines() as u16 - self.cursor.y_offset < terminal_height
             {
@@ -313,7 +313,7 @@ mod tests {
         editor.remove(36);
 
         // Then
-        assert_eq!(editor.cursor.x, 14);
+        assert_eq!(editor.cursor.x, 15);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
         assert_eq!(
@@ -350,7 +350,7 @@ mod tests {
             editor.get_editor_lines(36),
             vec!["this is a testthis is a test2", "this is a test3"]
         );
-        assert_eq!(editor.cursor.x, 14);
+        assert_eq!(editor.cursor.x, 15);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
     }
@@ -499,7 +499,7 @@ mod tests {
                 "this is a test4"
             ]
         );
-        assert_eq!(editor.cursor.x, 14);
+        assert_eq!(editor.cursor.x, 15);
         assert_eq!(editor.cursor.y, 1);
         assert_eq!(editor.cursor.y_offset, 0);
     }
