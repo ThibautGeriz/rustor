@@ -75,12 +75,13 @@ impl Editor {
             self.piece_table.remove(start_index as u32 - 1, 1);
             self.cursor.x = self.cursor.x - 1;
         } else if y_position_in_file > 1 {
+            let lines = self.get_editor_lines(terminal_height as usize);
             self.piece_table.remove(start_index as u32 - 1, 1);
             self.cursor.y = self.cursor.y - 1;
-            let lines = self.get_editor_lines(terminal_height as usize);
-            self.cursor.x = (lines[self.cursor.y as usize].len()) as u16 - 1;
+            self.cursor.x = (lines[self.cursor.y as usize - 1].len()) as u16;
             if self.cursor.y_offset > 0
-                && self.get_number_of_lines() as u16 - self.cursor.y_offset < terminal_height {
+                && self.get_number_of_lines() as u16 - self.cursor.y_offset < terminal_height
+            {
                 self.cursor.y_offset -= 1;
                 self.cursor.y += 1;
             }
@@ -500,6 +501,37 @@ mod tests {
         );
         assert_eq!(editor.cursor.x, 14);
         assert_eq!(editor.cursor.y, 1);
+        assert_eq!(editor.cursor.y_offset, 0);
+    }
+
+    #[test]
+    fn remove_should_remove_last_empty_line() {
+        // Given
+        let cursor = CursorPosition {
+            x: 1,
+            y: 4,
+            y_offset: 0,
+        };
+        let lines = vec![
+            String::from("this is a test"),
+            String::from(""),
+            String::from(""),
+            String::from(""),
+        ];
+        let piece_table = PieceTable::new(lines.clone().join("\n"));
+
+        let mut editor = Editor {
+            piece_table,
+            cursor,
+        };
+
+        // When
+        editor.remove(5);
+
+        // Then
+        assert_eq!(editor.get_range_lines(0, 4), vec!["this is a test", "", ""]);
+        assert_eq!(editor.cursor.x, 1);
+        assert_eq!(editor.cursor.y, 3);
         assert_eq!(editor.cursor.y_offset, 0);
     }
 
