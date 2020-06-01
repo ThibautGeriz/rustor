@@ -132,6 +132,20 @@ pub fn handle_key_press(
                 .cursor
                 .move_down(&editor.get_all_lines(), terminal_height);
         }
+        Key::F(1) => {
+            editor.cursor.move_to_beginning_of_line();
+        }
+        Key::F(2) => {
+            let lines = editor.get_all_lines();
+            editor.cursor.move_to_end_of_line(lines);
+        }
+        Key::F(3) => {
+            editor.cursor.move_to_beginning_of_file();
+        }
+        Key::F(4) => {
+            let lines = editor.get_all_lines();
+            editor.cursor.move_to_end_of_file(lines);
+        }
         Key::Esc => {
             return false;
         }

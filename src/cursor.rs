@@ -58,11 +58,26 @@ impl CursorPosition {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn move_to_end_of_line(&mut self, lines: &[String]) {
+    pub fn move_to_end_of_line(&mut self, lines: Vec<String>) {
         let y_position_in_file = self.get_y_position_in_file() as usize;
         let number_of_char_in_line = lines[y_position_in_file - 1].len() as u16;
         self.x = number_of_char_in_line + 1;
+    }
+
+    pub fn move_to_end_of_file(&mut self, lines: Vec<String>) {
+        self.y = lines.len() as u16;
+        let number_of_char_in_line = lines.last().unwrap().len() as u16;
+        self.x = number_of_char_in_line + 1;
+    }
+
+    pub fn move_to_beginning_of_line(&mut self) {
+        self.x = 1;
+    }
+
+    pub fn move_to_beginning_of_file(&mut self) {
+        self.x = 1;
+        self.y = 1;
+        self.y_offset = 0;
     }
 }
 
@@ -302,7 +317,7 @@ mod tests {
     }
 
     #[test]
-    fn should_move_to_end_file() {
+    fn should_move_to_end_of_line() {
         // Given
         let mut cursor = CursorPosition {
             x: 4,
@@ -318,11 +333,72 @@ mod tests {
         ];
 
         // When
-        cursor.move_to_end_of_line(&lines);
+        cursor.move_to_end_of_line(lines);
 
         // Then
         assert_eq!(cursor.x, 11);
         assert_eq!(cursor.y, 3);
+        assert_eq!(cursor.y_offset, 0);
+    }
+
+    #[test]
+    fn should_move_to_end_of_file() {
+        // Given
+        let mut cursor = CursorPosition {
+            x: 4,
+            y: 3,
+            y_offset: 0,
+        };
+        let lines: Vec<String> = vec![
+            String::from("first"),
+            String::from("second"),
+            String::from("third line"),
+            String::from("fourth"),
+            String::from("fifth"),
+        ];
+
+        // When
+        cursor.move_to_end_of_file(lines);
+
+        // Then
+        assert_eq!(cursor.x, 6);
+        assert_eq!(cursor.y, 5);
+        assert_eq!(cursor.y_offset, 0);
+    }
+
+    #[test]
+    fn should_move_to_beginning_of_line() {
+        // Given
+        let mut cursor = CursorPosition {
+            x: 4,
+            y: 3,
+            y_offset: 0,
+        };
+
+        // When
+        cursor.move_to_beginning_of_line();
+
+        // Then
+        assert_eq!(cursor.x, 1);
+        assert_eq!(cursor.y, 3);
+        assert_eq!(cursor.y_offset, 0);
+    }
+
+    #[test]
+    fn should_move_to_beginning_of_file() {
+        // Given
+        let mut cursor = CursorPosition {
+            x: 4,
+            y: 3,
+            y_offset: 1,
+        };
+
+        // When
+        cursor.move_to_beginning_of_file();
+
+        // Then
+        assert_eq!(cursor.x, 1);
+        assert_eq!(cursor.y, 1);
         assert_eq!(cursor.y_offset, 0);
     }
 }
