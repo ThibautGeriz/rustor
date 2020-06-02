@@ -144,7 +144,7 @@ pub fn handle_key_press(
         }
         Key::F(4) => {
             let lines = editor.get_all_lines();
-            editor.cursor.move_to_end_of_file(lines);
+            editor.cursor.move_to_end_of_file(lines, terminal_height);
         }
         Key::Esc => {
             return false;

@@ -64,10 +64,14 @@ impl CursorPosition {
         self.x = number_of_char_in_line + 1;
     }
 
-    pub fn move_to_end_of_file(&mut self, lines: Vec<String>) {
-        self.y = lines.len() as u16;
-        let number_of_char_in_line = lines.last().unwrap().len() as u16;
-        self.x = number_of_char_in_line + 1;
+    pub fn move_to_end_of_file(&mut self, lines: Vec<String>, terminal_height: u16) {
+        self.x = 1;
+        if lines.len() as u16 > terminal_height {
+            self.y_offset = lines.len() as u16 - terminal_height + 1;
+        } else {
+            self.y_offset = 0;
+        }
+        self.y = lines.len() as u16 - self.y_offset;
     }
 
     pub fn move_to_beginning_of_line(&mut self) {
@@ -358,12 +362,37 @@ mod tests {
         ];
 
         // When
-        cursor.move_to_end_of_file(lines);
+        cursor.move_to_end_of_file(lines, 6);
 
         // Then
-        assert_eq!(cursor.x, 6);
+        assert_eq!(cursor.x, 1);
         assert_eq!(cursor.y, 5);
         assert_eq!(cursor.y_offset, 0);
+    }
+
+    #[test]
+    fn should_move_to_end_of_file_with_offset() {
+        // Given
+        let mut cursor = CursorPosition {
+            x: 4,
+            y: 3,
+            y_offset: 0,
+        };
+        let lines: Vec<String> = vec![
+            String::from("first"),
+            String::from("second"),
+            String::from("third line"),
+            String::from("fourth"),
+            String::from("fifth"),
+        ];
+
+        // When
+        cursor.move_to_end_of_file(lines, 4);
+
+        // Then
+        assert_eq!(cursor.x, 1);
+        assert_eq!(cursor.y, 3);
+        assert_eq!(cursor.y_offset, 2);
     }
 
     #[test]
