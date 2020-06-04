@@ -4,6 +4,8 @@ Text editor in rust
 
 This is a pet project to learn RUST, use at your own risk (they should be limited)
 
+![demo rustor](./img/demo.gif "demo rustor")
+
 ## Requirements
 
 [Install RUST](https://www.rust-lang.org/en-US/install.html):
